@@ -28,7 +28,8 @@
           "resizeMode": "contain",
           "backgroundColor": "#0E1B1F"
         }
-      ]
+      ],
+      "expo-audio"
     ],
     "experiments": {
       "typedRoutes": true

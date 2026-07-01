@@ -18,6 +18,7 @@
 - **react-native-ease** — **simple, subtle** animations: screen fades, tile stagger, small UI transitions. Reach for this first; escalate to Reanimated *only* for the 4 signature moments. The rule is **subtle** — never animate everything.
 - **pressto** — press states on **every** tappable element (spring-physics scale/opacity). Configure once at the root with `PressablesConfig`. Peers: reanimated + gesture-handler + worklets.
 - **pulsar** — haptics (rich preset library). Wire a selection preset into pressto's global `onPress` handler so every tap feels, plus targeted presets on key moments.
+- **expo-audio** — short UI sounds. Currently the soft bell chime on each 4-7-8 phase change (craving tool); a native module, so it needs a dev build.
 - **react-native-keyboard-controller** — frame-perfect keyboard behavior for the few text inputs (reasons editing, edit details).
 - **Zustand** + **AsyncStorage** (persist middleware) — all app state, 100% local.
 - **react-native-purchases** (RevenueCat) — subscriptions + entitlements + restore.
@@ -120,7 +121,7 @@ Reset never erases `longestStreakMs`. Copy stays shame-free (see design brief B5
 - `unlocked(msClean)` vs upcoming (dimmed + countdown). Factual, calm, never graphic.
 
 ### `lib/breathing.ts`
-- 4-7-8 loop driver for the craving orb: inhale 4s (expand), hold 7s, exhale 8s (contract). Reanimated shared values for the orb; haptic (pulsar) on each phase change.
+- 4-7-8 loop driver for the craving orb: inhale 4s (expand), hold 7s, exhale 8s (contract). The orb (Reanimated) and the guiding label both derive from this on a shared clock; a soft **sound** cue (expo-audio) fires on each phase change — see the §B4 build note (the original per-phase haptic was dropped: a long buzz on the hold felt disorienting).
 
 ---
 
@@ -316,6 +317,14 @@ Additions/changes made while building Home + the onboarding funnel that were **n
 
 **Paywall → Home transition (smoke-styled loader)**
 - `components/splash/TransitionLoader.tsx` — same atmosphere as the splash; the fog thins as it "clears the air" with a spinner + label, then calls `onDone`. Wired in `app/onboarding/paywall.tsx`: `finish()` shows the loader; `setOnboardingComplete(true)` is only flipped in `onDone` — otherwise the onboarding `_layout` `Redirect` fires immediately and skips the transition.
+
+**Craving tool (§B4) — breathing screen**
+- `app/(app)/craving.tsx` + `components/craving/` (`BreathingOrb`, `CraveKit`, `SoundToggle`) + `hooks/useBreathPhase.ts`. Atmosphere screen — live `Atmosphere` behind, dark always, light status bar. Reached from Home's "I need a moment" as a modal: `slide_from_bottom`, `animationDuration: 750`, swipe-to-dismiss kept (see `app/(app)/_layout.tsx`).
+- **Orb follows the phases.** The WOW glowing sphere; its scale is driven off the shared phase clock via the `phase` prop (Reanimated `withTiming` per phase — grow over the inhale, settle/hold at full, contract over the exhale). Re-anchored on every phase change so it stays locked to the guiding label — no independent-timer drift.
+- **Guiding label + countdown** come from `useBreathPhase` (a JS clock over `phaseAt`); the word cross-fades softly on each change, and the whole screen settles in with a staggered fade on open.
+- **Sound cue instead of haptic.** A long vibration on the 7s hold felt disorienting, so the per-phase pulse is now a soft bell chime — Mixkit "Relaxing bell chime", `assets/audio/breath-cue.mp3` (~2.7s, Mixkit License) — played via **expo-audio** (`lib/sound.ts`: one reused `AudioPlayer`, `playsInSilentMode`, guarded no-op without the native module). On/off is a **`SoundToggle`** pill on the title line; persisted as `breathSound` (default on), enabling it previews the chime. **Requires a native rebuild** (`expo run:android`/`ios`) for the expo-audio module.
+- **Fog legibility.** A `textScrim` (from the design) darkens top/bottom behind the content, strengthening with the haze; the locked cards also darken with the haze (`CraveKit` takes `haze = 1 - clarity`), so the frosted rows keep contrast even at full smoke.
+- **Premium craving kit** stays frosted-locked — visual only, no RevenueCat yet.
 
 **Design handoff bundle**
 - `clearway-design-brief/` (the exported Claude Design mockups) is gitignored — source mockups, not app code.

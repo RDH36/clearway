@@ -16,7 +16,16 @@ export default function AppLayout() {
       <Stack.Screen name="health" />
       <Stack.Screen name="reasons" />
       <Stack.Screen name="settings" />
-      <Stack.Screen name="craving" options={{ presentation: 'modal' }} />
+      <Stack.Screen
+        name="craving"
+        options={{
+          presentation: 'modal',
+          animation: 'slide_from_bottom',
+          animationDuration: 750,
+          gestureEnabled: true,
+          gestureDirection: 'vertical',
+        }}
+      />
       <Stack.Screen name="reset" options={{ presentation: 'modal' }} />
       <Stack.Screen name="paywall" options={{ presentation: 'modal' }} />
     </Stack>

@@ -39,6 +39,7 @@ export type QuitState = {
   onboardingComplete: boolean;
   themePref: ThemePref; // default 'system'
   notifications: NotificationPrefs;
+  breathSound: boolean; // craving 4-7-8 phase-change chime on/off
 
   // bookkeeping
   hasRequestedReview: boolean; // in-app review fired once
@@ -51,6 +52,7 @@ export type QuitActions = {
   slip: () => void;
   setOnboardingComplete: (value: boolean) => void;
   setThemePref: (pref: ThemePref) => void;
+  setBreathSound: (value: boolean) => void;
   setReasons: (reasons: string[]) => void;
   setNotifications: (patch: Partial<NotificationPrefs>) => void;
   markReviewRequested: () => void;
@@ -72,6 +74,7 @@ const DEFAULT_STATE: QuitState = {
   reasons: [],
   onboardingComplete: false,
   themePref: 'system',
+  breathSound: true,
   notifications: {
     enabled: false,
     dailyTime: '09:00',
@@ -110,6 +113,7 @@ export const useQuitStore = create<Store>()(
 
       setOnboardingComplete: (value) => set({ onboardingComplete: value }),
       setThemePref: (themePref) => set({ themePref }),
+      setBreathSound: (breathSound) => set({ breathSound }),
       setReasons: (reasons) => set({ reasons }),
       setNotifications: (patch) =>
         set((s) => ({ notifications: { ...s.notifications, ...patch } })),
