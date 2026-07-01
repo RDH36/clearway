@@ -12,8 +12,15 @@ export default function AppLayout() {
   return (
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="index" />
-      <Stack.Screen name="milestones" />
-      <Stack.Screen name="health" />
+      <Stack.Screen
+        name="progress"
+        options={{
+          animation: 'slide_from_right',
+          animationDuration: 320,
+          gestureEnabled: true,
+          gestureDirection: 'horizontal',
+        }}
+      />
       <Stack.Screen name="reasons" />
       <Stack.Screen name="settings" />
       <Stack.Screen
@@ -21,7 +28,7 @@ export default function AppLayout() {
         options={{
           presentation: 'modal',
           animation: 'slide_from_bottom',
-          animationDuration: 750,
+          animationDuration: 320,
           gestureEnabled: true,
           gestureDirection: 'vertical',
         }}

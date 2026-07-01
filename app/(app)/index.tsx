@@ -9,6 +9,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PressableScale } from 'pressto';
 import { useNow } from '@/hooks/useNow';
+import { useScreenFocused } from '@/hooks/useScreenFocused';
 import { useQuitStore } from '@/store/useQuitStore';
 import { msClean } from '@/lib/time';
 import { moneySaved } from '@/lib/money';
@@ -45,6 +46,7 @@ export default function Home() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const now = useNow(250);
+  const focused = useScreenFocused();
 
   const quit = useQuitStore((s) => s.quitTimestamp);
   const weekly = useQuitStore((s) => s.weeklySpend);
@@ -61,7 +63,7 @@ export default function Home() {
       <StatusBar style="light" />
       {/* Keyed on quitTimestamp so a reset remounts a fresh smoke canvas — it
           immediately returns to full haze and keeps drifting (no stale/frozen shader). */}
-      <Atmosphere key={quit ?? 0} msClean={ms} />
+      <Atmosphere key={quit ?? 0} msClean={ms} active={focused} />
 
       <View
         style={{
@@ -74,7 +76,7 @@ export default function Home() {
       >
         <HomeHeader
           onSettings={() => router.push('/settings')}
-          onProgress={() => router.push('/milestones')}
+          onProgress={() => router.push('/progress')}
         />
 
         <HeroCounter msClean={ms} statusCopy={statusFor(ms)} />
@@ -83,7 +85,7 @@ export default function Home() {
           <StatsRow
             money={formatMoney(moneySaved(weekly, ms))}
             clearedPct={cleared}
-            onProgress={() => router.push('/milestones')}
+            onProgress={() => router.push('/progress')}
           />
 
           <PressableScale style={MOMENT} onPress={() => router.push('/craving')}>

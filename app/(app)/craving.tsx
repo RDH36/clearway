@@ -17,14 +17,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 import Animated, {
   Easing,
-  FadeIn,
-  FadeInDown,
   useAnimatedStyle,
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
 import { PressableScale } from 'pressto';
 import { useNow } from '@/hooks/useNow';
+import { useAfterTransition } from '@/hooks/useAfterTransition';
 import { useBreathPhase } from '@/hooks/useBreathPhase';
 import { useQuitStore } from '@/store/useQuitStore';
 import { msClean } from '@/lib/time';
@@ -64,6 +63,7 @@ export default function Craving() {
   const breathSound = useQuitStore((s) => s.breathSound);
   const setBreathSound = useQuitStore((s) => s.setBreathSound);
   const ms = msClean(quit, now);
+  const smokeOn = useAfterTransition();
   const breath = useBreathPhase(breathSound);
 
   useEffect(() => {
@@ -87,7 +87,7 @@ export default function Craving() {
   return (
     <View style={{ flex: 1, backgroundColor: '#0E1B1F' }}>
       <StatusBar style="light" />
-      <Atmosphere key={quit ?? 0} msClean={ms} />
+      <Atmosphere key={quit ?? 0} msClean={ms} active={smokeOn} />
       <Scrim intensity={scrim} />
 
       <View
@@ -99,7 +99,7 @@ export default function Craving() {
           paddingBottom: insets.bottom + 20,
         }}
       >
-        <Animated.View entering={FadeInDown.duration(520).delay(80)} style={{ gap: 5 }}>
+        <View style={{ gap: 5 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <View style={{ flex: 1 }} />
             <Text style={{ fontFamily: fonts.displaySemibold, fontSize: 24, color: '#EAF4F2', letterSpacing: -0.3 }}>
@@ -112,10 +112,9 @@ export default function Craving() {
           <Text style={{ fontFamily: fonts.mono, fontSize: 11, letterSpacing: 2, color: '#7E9A9B', textTransform: 'uppercase', textAlign: 'center' }}>
             4 · 7 · 8 breathing
           </Text>
-        </Animated.View>
+        </View>
 
-        <Animated.View
-          entering={FadeIn.duration(760).delay(180)}
+        <View
           style={{ alignItems: 'center', justifyContent: 'center', gap: 22, paddingVertical: 20 }}
         >
           <BreathingOrb phase={breath.phase} />
@@ -125,13 +124,13 @@ export default function Craving() {
             </Animated.Text>
             <Text style={{ fontFamily: fonts.mono, fontSize: 16, color: '#5BE0C6' }}>{breath.count}</Text>
           </View>
-        </Animated.View>
+        </View>
 
-        <Animated.View entering={FadeInDown.duration(520).delay(320)} style={{ flex: 1 }}>
+        <View style={{ flex: 1 }}>
           <CraveKit haze={haze} />
-        </Animated.View>
+        </View>
 
-        <Animated.View entering={FadeInDown.duration(520).delay(420)}>
+        <View>
           <PressableScale
             onPress={() => router.back()}
             style={{
@@ -146,7 +145,7 @@ export default function Craving() {
           >
             <Text style={{ fontFamily: fonts.bodySemibold, fontSize: 15, color: '#EAF4F2' }}>{"I'm okay now"}</Text>
           </PressableScale>
-        </Animated.View>
+        </View>
       </View>
     </View>
   );
