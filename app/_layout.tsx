@@ -1,6 +1,6 @@
 import '../global.css';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
@@ -21,6 +21,7 @@ import {
 import { AppProviders } from '@/providers/AppProviders';
 import { useTheme } from '@/theme/ThemeProvider';
 import { useQuitStore } from '@/store/useQuitStore';
+import { AnimatedSplash } from '@/components/splash/AnimatedSplash';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -41,6 +42,7 @@ export default function RootLayout() {
   });
   const hasHydrated = useQuitStore((s) => s._hasHydrated);
   const ready = fontsLoaded && hasHydrated;
+  const [splashDone, setSplashDone] = useState(false);
 
   useEffect(() => {
     if (ready) SplashScreen.hideAsync();
@@ -59,6 +61,8 @@ export default function RootLayout() {
         {/* TEMP (Step 2 sanity) — remove with app/debug.tsx */}
         <Stack.Screen name="debug" options={{ presentation: 'modal' }} />
       </Stack>
+      {/* Animated brand splash, handed off from the native splash then faded out. */}
+      {!splashDone ? <AnimatedSplash onFinish={() => setSplashDone(true)} /> : null}
     </AppProviders>
   );
 }

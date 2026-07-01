@@ -307,4 +307,17 @@ Additions/changes made while building Home + the onboarding funnel that were **n
 **Home (§B1) — stats card**
 - The right stats card now shows **"Air cleared %"** (= `min(99, round(clarity(ms)*100))`, ring fills with it) instead of the "next milestone · in Xh" countdown — a more meaningful, on-theme read of progress. **Capped at 99%** since the smoke never fully clears (consistent with the persist-forever smoke decision) and to keep some motivation. `components/home/StatsRow.tsx` takes `clearedPct` (was `milestoneLabel`/`remText`/`pct`); `lib/milestones.progress` no longer feeds it.
 
+**Logo & Splash (design brief — `Clearway Logo & Splash.dc.html`)**
+- `components/splash/SplashBackdrop.tsx` — the splash atmosphere (petrol linear gradient + aqua sky glow + dawn horizon glow) as static SVG; the brand launch frame, always dark (independent of the runtime theme).
+- `components/splash/AnimatedSplash.tsx` — JS launch screen handed off from the native splash once fonts + persisted state are ready. **Smoke (reused `SmokeSkia`) drifts over the mark then clears** to reveal it ("The air clears from here."), the logo scales in inside two expanding aqua rings (`cwSplashRing`), wordmark + tagline rise, then the whole overlay fades into the app. Mounted as an overlay in `app/_layout.tsx` (state `splashDone`); native splash still held until `ready` so there's no flash.
+- `assets/clearway-logo.png` — the 1024² square master from the design brief, copied into `assets/` (survives the gitignore of the brief bundle).
+- `components/splash/Spinner.tsx` — shared aqua top-arc spinner (splash + transition loader).
+- **App icons swapped to the brief's production exports** (the old files were low-res placeholders): `assets/icon.png` ← square master (iOS self-masks), `assets/adaptive-icon.png` ← adaptive foreground (orb in the 66% safe zone, bg `#0E1B1F`), `assets/splash.png` ← rounded 1024² icon. `app.json` splash `imageWidth` 200→120 to match the JS splash logo (seamless native→JS handoff). **Requires a native rebuild** (`npx expo prebuild` + `run:android`/`run:ios`) — a JS reload won't update the launcher icon or native splash.
+
+**Paywall → Home transition (smoke-styled loader)**
+- `components/splash/TransitionLoader.tsx` — same atmosphere as the splash; the fog thins as it "clears the air" with a spinner + label, then calls `onDone`. Wired in `app/onboarding/paywall.tsx`: `finish()` shows the loader; `setOnboardingComplete(true)` is only flipped in `onDone` — otherwise the onboarding `_layout` `Redirect` fires immediately and skips the transition.
+
+**Design handoff bundle**
+- `clearway-design-brief/` (the exported Claude Design mockups) is gitignored — source mockups, not app code.
+
 **Still deferred (per spec):** RevenueCat / real purchases (Step 6) — the A5 paywall is visual-only; × and CTA both just finish onboarding.

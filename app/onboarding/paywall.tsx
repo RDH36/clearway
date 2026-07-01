@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -7,6 +7,7 @@ import { useQuitStore } from '@/store/useQuitStore';
 import { useNow } from '@/hooks/useNow';
 import { msClean } from '@/lib/time';
 import { Cta } from '@/components/onboarding/Cta';
+import { TransitionLoader } from '@/components/splash/TransitionLoader';
 import { fonts } from '@/constants/theme';
 
 type Plan = 'annual' | 'monthly' | 'lifetime';
@@ -78,14 +79,22 @@ export default function Paywall() {
   const quit = useQuitStore((s) => s.quitTimestamp);
   const now = useNow(250);
   const [plan, setPlan] = useState<Plan>('annual');
+  const [entering, setEntering] = useState(false);
 
   const sec = Math.floor(msClean(quit, now) / 1000);
   const hms = `${pad(Math.floor(sec / 3600))} : ${pad(Math.floor((sec % 3600) / 60))} : ${pad(sec % 60)}`;
 
-  const finish = () => {
+  // Show the smoke-styled loader first; only flip onboardingComplete once it
+  // finishes, otherwise the onboarding layout's Redirect skips the transition.
+  // enterHome MUST be stable — the paywall re-renders every 250ms (useNow), and
+  // an unstable onDone would restart the loader's timer forever (never fires).
+  const finish = () => setEntering(true);
+  const enterHome = useCallback(() => {
     setOnboardingComplete(true);
     router.replace('/');
-  };
+  }, [router, setOnboardingComplete]);
+
+  if (entering) return <TransitionLoader onDone={enterHome} />;
 
   return (
     <View style={{ flex: 1, backgroundColor: '#0B181C', paddingTop: insets.top + 8, paddingBottom: insets.bottom + 20, paddingHorizontal: 24 }}>

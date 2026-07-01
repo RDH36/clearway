@@ -19,3 +19,6 @@ expo-env.d.ts
 *.log
 .DS_Store
 .env*.local
+
+# Design handoff bundle (source mockups, not app code)
+clearway-design-brief/
