@@ -1,0 +1,33 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * Theme tokens as RGB triplets (design brief §3).
+ * Light is the :root default; the .dark class (driven by the ThemeProvider via
+ * NativeWind's colorScheme) swaps to the primary dark palette.
+ */
+:root {
+  --color-base: 238 245 242; /* #EEF5F2 */
+  --color-surface: 255 255 255; /* #FFFFFF */
+  --color-haze: 201 216 214; /* #C9D8D6 */
+  --color-ink: 14 27 31; /* #0E1B1F */
+  --color-muted: 92 115 117; /* #5C7375 */
+  --color-clear: 19 168 140; /* #13A88C */
+  --color-dawn: 232 137 76; /* #E8894C */
+  --color-warn: 194 97 59; /* #C2613B */
+  --color-line: 219 230 227; /* #DBE6E3 */
+}
+
+.dark:root,
+.dark {
+  --color-base: 14 27 31; /* #0E1B1F deep petrol */
+  --color-surface: 22 40 46; /* #16282E */
+  --color-haze: 51 71 76; /* #33474C */
+  --color-ink: 234 244 242; /* #EAF4F2 */
+  --color-muted: 126 154 155; /* #7E9A9B */
+  --color-clear: 91 224 198; /* #5BE0C6 fresh-air aqua */
+  --color-dawn: 255 181 122; /* #FFB57A warm sunrise */
+  --color-warn: 192 138 119; /* #C08A77 muted terracotta */
+  --color-line: 35 56 62; /* #23383E */
+}

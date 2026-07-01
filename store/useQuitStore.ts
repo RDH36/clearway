@@ -1,0 +1,131 @@
+/**
+ * App state — the single Zustand store (spec §2), persisted to AsyncStorage.
+ *
+ * Source-of-truth principle (spec §1): everything visible derives from
+ * `quitTimestamp` at render time. We never store a running counter here.
+ * Premium status is NOT here — it lives in RevenueCat (spec §5), read via usePremium().
+ */
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { create } from 'zustand';
+import { createJSONStorage, persist } from 'zustand/middleware';
+import { msClean } from '@/lib/time';
+
+export type Currency = 'USD' | 'GBP' | 'CAD' | 'AUD';
+export type Motivation = 'health' | 'money' | 'control' | 'someone';
+export type ThemePref = 'light' | 'dark' | 'system';
+
+export type NotificationPrefs = {
+  enabled: boolean;
+  dailyTime: string; // "HH:mm"
+  milestonesOn: boolean;
+  streakNudgeOn: boolean;
+};
+
+export type QuitState = {
+  // core
+  quitTimestamp: number | null; // UTC ms; null until onboarding done
+  longestStreakMs: number; // best run ever; survives resets
+
+  // from onboarding quiz
+  weeklySpend: number; // user's currency units
+  currency: Currency;
+  primaryMotivation: Motivation;
+  vapingDuration: string; // Q2 answer
+  usageFrequency: string; // Q3 answer
+  worstCravingTime: string; // Q5 answer
+  reasons: string[]; // "my why" cards, editable
+
+  // app
+  onboardingComplete: boolean;
+  themePref: ThemePref; // default 'system'
+  notifications: NotificationPrefs;
+
+  // bookkeeping
+  hasRequestedReview: boolean; // in-app review fired once
+};
+
+export type QuitActions = {
+  /** WOW moment — mark the user clean now and start the counter. */
+  startQuit: () => void;
+  /** "I slipped" — keep the record, restart the counter (spec §2 reset logic). */
+  slip: () => void;
+  setOnboardingComplete: (value: boolean) => void;
+  setThemePref: (pref: ThemePref) => void;
+  setReasons: (reasons: string[]) => void;
+  setNotifications: (patch: Partial<NotificationPrefs>) => void;
+  markReviewRequested: () => void;
+  /** Patch onboarding-quiz answers as they're tapped (spec §4). */
+  setQuizAnswers: (patch: Partial<QuitState>) => void;
+  /** Settings → "Delete my data": wipe back to defaults. */
+  resetAll: () => void;
+};
+
+const DEFAULT_STATE: QuitState = {
+  quitTimestamp: null,
+  longestStreakMs: 0,
+  weeklySpend: 0,
+  currency: 'USD',
+  primaryMotivation: 'health',
+  vapingDuration: '',
+  usageFrequency: '',
+  worstCravingTime: '',
+  reasons: [],
+  onboardingComplete: false,
+  themePref: 'system',
+  notifications: {
+    enabled: false,
+    dailyTime: '09:00',
+    milestonesOn: true,
+    streakNudgeOn: true,
+  },
+  hasRequestedReview: false,
+};
+
+type Store = QuitState &
+  QuitActions & {
+    /** Persist-rehydration flag — gate the launch redirect until this is true. */
+    _hasHydrated: boolean;
+    _setHasHydrated: (value: boolean) => void;
+  };
+
+export const useQuitStore = create<Store>()(
+  persist(
+    (set, get) => ({
+      ...DEFAULT_STATE,
+      _hasHydrated: false,
+      _setHasHydrated: (value) => set({ _hasHydrated: value }),
+
+      startQuit: () => set({ quitTimestamp: Date.now() }),
+
+      slip: () => {
+        const { quitTimestamp, longestStreakMs } = get();
+        const current = msClean(quitTimestamp);
+        set({
+          // Preserve the record first, THEN restart the counter. Never erased.
+          longestStreakMs: Math.max(longestStreakMs, current),
+          quitTimestamp: Date.now(),
+        });
+        // Step 7 will reschedule milestone notifications + refresh the widget here.
+      },
+
+      setOnboardingComplete: (value) => set({ onboardingComplete: value }),
+      setThemePref: (themePref) => set({ themePref }),
+      setReasons: (reasons) => set({ reasons }),
+      setNotifications: (patch) =>
+        set((s) => ({ notifications: { ...s.notifications, ...patch } })),
+      markReviewRequested: () => set({ hasRequestedReview: true }),
+      setQuizAnswers: (patch) => set(patch),
+      resetAll: () => set({ ...DEFAULT_STATE }),
+    }),
+    {
+      name: 'clearway-quit-store',
+      version: 1,
+      storage: createJSONStorage(() => AsyncStorage),
+      // Don't persist transient flags or the actions.
+      partialize: ({ _hasHydrated, ...rest }) => rest,
+      onRehydrateStorage: () => (state) => {
+        state?._setHasHydrated(true);
+      },
+    }
+  )
+);
