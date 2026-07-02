@@ -31,7 +31,15 @@ export default function AppLayout() {
           contentStyle: { backgroundColor: '#0E1B1F' },
         }}
       />
-      <Stack.Screen name="settings" />
+      <Stack.Screen
+        name="settings"
+        options={{
+          animation: 'slide_from_right',
+          animationDuration: 320,
+          gestureEnabled: true,
+          gestureDirection: 'horizontal',
+        }}
+      />
       <Stack.Screen
         name="craving"
         options={{

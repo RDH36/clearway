@@ -1,19 +1,132 @@
-import type { Href } from 'expo-router';
-import { PlaceholderScreen } from '@/components/ui/PlaceholderScreen';
+import { useState } from 'react';
+import { Linking, ScrollView, Text, View } from 'react-native';
+import { useRouter } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { PressableScale } from 'pressto';
+import Constants from 'expo-constants';
+import { fonts } from '@/constants/theme';
+import { useTheme } from '@/theme/ThemeProvider';
+import { useQuitStore } from '@/store/useQuitStore';
+import { BackIcon } from '@/components/progress/icons';
+import { Group, Row, SectionLabel, withAlpha } from '@/components/settings/SettingsGroup';
+import { Toggle } from '@/components/settings/Toggle';
+import { AppearanceRow } from '@/components/settings/AppearanceRow';
+import { PRIVACY_URL, TERMS_URL, rateApp, sendFeedback, shareApp } from '@/components/settings/actions';
+import { QuitDateSheet } from '@/components/settings/sheets/QuitDateSheet';
+import { CURRENCY_SYMBOL, FrequencySheet, WeeklyCostSheet } from '@/components/settings/sheets/EditValueSheets';
+import { ReminderTimeSheet, formatTime12 } from '@/components/settings/sheets/ReminderTimeSheet';
+import { ConfirmDeleteSheet } from '@/components/settings/sheets/ConfirmDeleteSheet';
 
-// D — Settings. Your quit · App · Premium · Support · About.
-export default function Settings() {
+type Sheet = 'date' | 'cost' | 'frequency' | 'time' | 'delete' | null;
+
+function Section({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <PlaceholderScreen
-      title="D · Settings"
-      subtitle="Appearance, notifications, premium, about."
-      links={[
-        { label: 'Reset / start over', href: '/reset', variant: 'secondary' },
-        { label: 'My reasons', href: '/reasons', variant: 'secondary' },
-        // TEMP (Step 2/3 sanity) — remove with app/debug.tsx
-        { label: '🔧 Core-logic debug', href: '/debug' as Href, variant: 'secondary' },
-        { label: 'Back', back: true, variant: 'secondary' },
-      ]}
-    />
+    <View style={{ gap: 9 }}>
+      <SectionLabel>{label}</SectionLabel>
+      <Group>{children}</Group>
+    </View>
+  );
+}
+
+export default function Settings() {
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const { name, colors } = useTheme();
+
+  const quitTimestamp = useQuitStore((s) => s.quitTimestamp);
+  const weeklySpend = useQuitStore((s) => s.weeklySpend);
+  const currency = useQuitStore((s) => s.currency);
+  const usageFrequency = useQuitStore((s) => s.usageFrequency);
+  const reasonsCount = useQuitStore((s) => s.reasons.length);
+  const notifications = useQuitStore((s) => s.notifications);
+  const setNotifications = useQuitStore((s) => s.setNotifications);
+
+  const [sheet, setSheet] = useState<Sheet>(null);
+
+  const quitDateLabel = quitTimestamp
+    ? new Date(quitTimestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    : '—';
+  const version = Constants.expoConfig?.version ?? '1.0.0';
+
+  return (
+    <View style={{ flex: 1, backgroundColor: colors.base }}>
+      <StatusBar style={name === 'dark' ? 'light' : 'dark'} />
+
+      <View style={{ flex: 1, paddingTop: insets.top + 12 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 24, marginBottom: 14 }}>
+          <PressableScale
+            onPress={() => router.back()}
+            style={{
+              width: 44,
+              height: 44,
+              borderRadius: 13,
+              borderWidth: 1,
+              borderColor: colors.line,
+              backgroundColor: withAlpha(colors.surface, 0.5),
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <BackIcon color={colors.ink} />
+          </PressableScale>
+          <Text style={{ fontFamily: fonts.displaySemibold, fontSize: 27, color: colors.ink, letterSpacing: -0.4 }}>
+            Settings
+          </Text>
+        </View>
+
+        <ScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 8, paddingBottom: insets.bottom + 34, gap: 22 }}
+          showsVerticalScrollIndicator={false}
+        >
+          <Section label="Your quit">
+            <Row label="Quit date" value={quitDateLabel} onPress={() => setSheet('date')} />
+            <Row label="Weekly cost" value={`${CURRENCY_SYMBOL[currency]}${weeklySpend}`} onPress={() => setSheet('cost')} />
+            <Row label="Frequency" value={usageFrequency || '—'} onPress={() => setSheet('frequency')} />
+            <Row label="My reasons" value={String(reasonsCount)} onPress={() => router.push('/reasons')} />
+            <Row label="Reset / start over" danger onPress={() => router.push('/reset')} />
+          </Section>
+
+          <Section label="App">
+            <AppearanceRow />
+            <Row
+              label="Notifications"
+              right={<Toggle value={notifications.enabled} onChange={(enabled) => setNotifications({ enabled })} />}
+            />
+            {notifications.enabled ? (
+              <Row label="Daily reminder" value={formatTime12(notifications.dailyTime)} onPress={() => setSheet('time')} />
+            ) : null}
+          </Section>
+
+          <Section label="Premium">
+            <Row label="Manage subscription" value="Free" onPress={() => router.push('/paywall')} />
+            <Row label="Restore purchases" onPress={() => {}} />
+          </Section>
+
+          <Section label="Support">
+            <Row label="Rate the app" onPress={() => rateApp()} />
+            <Row label="Send feedback" onPress={sendFeedback} />
+            <Row label="Share Clearway" onPress={shareApp} />
+          </Section>
+
+          <Section label="About">
+            <Row label="Privacy policy" onPress={() => Linking.openURL(PRIVACY_URL)} />
+            <Row label="Terms of service" onPress={() => Linking.openURL(TERMS_URL)} />
+            <Row
+              label="Version"
+              right={<Text style={{ fontFamily: fonts.mono, fontSize: 13, color: colors.muted }}>{version}</Text>}
+            />
+            <Row label="Delete my data" danger onPress={() => setSheet('delete')} />
+          </Section>
+        </ScrollView>
+      </View>
+
+      {sheet === 'date' ? <QuitDateSheet onClose={() => setSheet(null)} /> : null}
+      {sheet === 'cost' ? <WeeklyCostSheet onClose={() => setSheet(null)} /> : null}
+      {sheet === 'frequency' ? <FrequencySheet onClose={() => setSheet(null)} /> : null}
+      {sheet === 'time' ? <ReminderTimeSheet onClose={() => setSheet(null)} /> : null}
+      {sheet === 'delete' ? <ConfirmDeleteSheet onClose={() => setSheet(null)} /> : null}
+    </View>
   );
 }
