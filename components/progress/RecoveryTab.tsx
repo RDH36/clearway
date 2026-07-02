@@ -1,21 +1,34 @@
+import { useEffect, useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
+import { StaggerIn } from '@/components/ui/StaggerIn';
 import { HEALTH_MARKERS } from '@/lib/health';
 import { countdownLabel, durationLabel } from '@/lib/format';
 import { fonts } from '@/constants/theme';
 import { TimelineRow } from './TimelineRow';
 
-export function RecoveryTab({ ms }: { ms: number }) {
+export function RecoveryTab({ ms, visible = true }: { ms: number; visible?: boolean }) {
+  const [rowsReady, setRowsReady] = useState(false);
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setRowsReady(true));
+    return () => cancelAnimationFrame(id);
+  }, []);
   return (
     <View style={{ flex: 1 }}>
-      <Text style={{ fontFamily: fonts.body, fontSize: 14, color: '#9FB4B3', paddingTop: 4 }}>
-        {"What's healed — and what's next."}
-      </Text>
+      <StaggerIn index={0} base={30} duration={240} play={visible}>
+        <Text style={{ fontFamily: fonts.body, fontSize: 14, color: '#9FB4B3', paddingTop: 4 }}>
+          {"What's healed — and what's next."}
+        </Text>
+      </StaggerIn>
 
+      {!rowsReady ? (
+        <View style={{ flex: 1 }} />
+      ) : (
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingTop: 16, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
         {HEALTH_MARKERS.map((m, i) => {
           const past = ms >= m.atMs;
           return (
-            <TimelineRow key={m.id} state={past ? 'reached' : 'idle'} isLast={i === HEALTH_MARKERS.length - 1} size={30}>
+            <StaggerIn key={m.id} index={i + 1} base={30} step={30} duration={240} play={visible}>
+            <TimelineRow state={past ? 'reached' : 'idle'} isLast={i === HEALTH_MARKERS.length - 1} size={30}>
               <View
                 style={{
                   gap: 4,
@@ -57,9 +70,11 @@ export function RecoveryTab({ ms }: { ms: number }) {
                 </Text>
               </View>
             </TimelineRow>
+            </StaggerIn>
           );
         })}
       </ScrollView>
+      )}
     </View>
   );
 }

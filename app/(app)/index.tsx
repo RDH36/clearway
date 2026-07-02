@@ -3,8 +3,9 @@
  * money, milestone ring and clearing atmosphere all derive from quitTimestamp
  * (Step 2 logic) every tick. Overlay actions route to placeholders for now.
  */
+import { useCallback, useState } from 'react';
 import { Text, View, type ViewStyle } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PressableScale } from 'pressto';
@@ -45,8 +46,18 @@ const MOMENT: ViewStyle = {
 export default function Home() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const now = useNow(250);
+  const now = useNow(60000);
   const focused = useScreenFocused();
+  const [navigating, setNavigating] = useState(false);
+  const go = (href: Parameters<typeof router.push>[0]) => {
+    setNavigating(true);
+    router.push(href);
+  };
+  useFocusEffect(
+    useCallback(() => {
+      setNavigating(false);
+    }, [])
+  );
 
   const quit = useQuitStore((s) => s.quitTimestamp);
   const weekly = useQuitStore((s) => s.weeklySpend);
@@ -63,7 +74,7 @@ export default function Home() {
       <StatusBar style="light" />
       {/* Keyed on quitTimestamp so a reset remounts a fresh smoke canvas — it
           immediately returns to full haze and keeps drifting (no stale/frozen shader). */}
-      <Atmosphere key={quit ?? 0} msClean={ms} active={focused} />
+      <Atmosphere key={quit ?? 0} msClean={ms} active={focused && !navigating} />
 
       <View
         style={{
@@ -75,27 +86,27 @@ export default function Home() {
         }}
       >
         <HomeHeader
-          onSettings={() => router.push('/settings')}
-          onProgress={() => router.push('/progress')}
+          onSettings={() => go('/settings')}
+          onProgress={() => go('/progress')}
         />
 
-        <HeroCounter msClean={ms} statusCopy={statusFor(ms)} />
+        <HeroCounter quit={quit} statusCopy={statusFor(ms)} />
 
         <View style={{ gap: 12 }}>
           <StatsRow
             money={formatMoney(moneySaved(weekly, ms))}
             clearedPct={cleared}
-            onProgress={() => router.push('/progress')}
+            onProgress={() => go('/progress')}
           />
 
-          <PressableScale style={MOMENT} onPress={() => router.push('/craving')}>
+          <PressableScale style={MOMENT} onPress={() => go('/craving')}>
             <OrbIcon />
             <Text style={{ fontFamily: fonts.bodySemibold, fontSize: 16, color: '#5BE0C6' }}>I need a moment</Text>
           </PressableScale>
 
           <PressableScale
             style={{ alignSelf: 'center', flexDirection: 'row', alignItems: 'center', gap: 7, paddingVertical: 4, paddingHorizontal: 10 }}
-            onPress={() => router.push('/reset')}
+            onPress={() => go('/reset')}
           >
             <SlipIcon color={darkColors.warn} />
             <Text style={{ fontFamily: fonts.bodyMedium, fontSize: 14, color: darkColors.warn }}>I slipped</Text>

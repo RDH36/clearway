@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -6,7 +6,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 import { PressableScale } from 'pressto';
 import { useNow } from '@/hooks/useNow';
-import { useAfterTransition } from '@/hooks/useAfterTransition';
 import { useQuitStore } from '@/store/useQuitStore';
 import { msClean } from '@/lib/time';
 import { Atmosphere } from '@/components/home/Atmosphere';
@@ -49,16 +48,20 @@ function Scrim() {
 export default function Progress() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const now = useNow(1000);
+  const now = useNow(60000);
   const quit = useQuitStore((s) => s.quitTimestamp);
   const ms = msClean(quit, now);
-  const smokeOn = useAfterTransition();
   const [tab, setTab] = useState<ProgressTab>('milestones');
+  const [warm, setWarm] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setWarm(true), 700);
+    return () => clearTimeout(t);
+  }, []);
 
   return (
     <View style={{ flex: 1, backgroundColor: '#0E1B1F' }}>
       <StatusBar style="light" />
-      <Atmosphere key={quit ?? 0} msClean={ms} active={smokeOn} />
+      <Atmosphere key={quit ?? 0} msClean={ms} smoke={false} />
       <Scrim />
 
       <View
@@ -79,7 +82,14 @@ export default function Progress() {
           </View>
         </View>
 
-        {tab === 'milestones' ? <MilestonesTab ms={ms} quit={quit ?? 0} /> : <RecoveryTab ms={ms} />}
+        <View style={{ flex: 1, display: tab === 'milestones' ? 'flex' : 'none' }}>
+          <MilestonesTab ms={ms} quit={quit ?? 0} visible={tab === 'milestones'} />
+        </View>
+        {warm || tab === 'recovery' ? (
+          <View style={{ flex: 1, display: tab === 'recovery' ? 'flex' : 'none' }}>
+            <RecoveryTab ms={ms} visible={tab === 'recovery'} />
+          </View>
+        ) : null}
       </View>
     </View>
   );

@@ -1,16 +1,13 @@
-/**
- * Hero counter — the functional hero (design brief B1). Big day number in
- * Bricolage, h:m:s in Geist Mono (mono → seconds never shift the layout), and a
- * status line that softens with the streak. Derives live from msClean.
- */
 import { Text, View } from 'react-native';
-import { formatClean } from '@/lib/time';
+import { formatClean, msClean } from '@/lib/time';
+import { useNow } from '@/hooks/useNow';
 import { fonts } from '@/constants/theme';
 
 const pad = (n: number) => String(n).padStart(2, '0');
 
-export function HeroCounter({ msClean, statusCopy }: { msClean: number; statusCopy: string }) {
-  const { days, hours, minutes, seconds } = formatClean(msClean);
+export function HeroCounter({ quit, statusCopy }: { quit: number | null; statusCopy: string }) {
+  const now = useNow(250);
+  const { days, hours, minutes, seconds } = formatClean(msClean(quit, now));
   const hms = `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
 
   return (

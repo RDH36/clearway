@@ -81,13 +81,22 @@ half4 main(float2 xy) {
 `)!;
 
 export function SmokeSkia({ opacity, hq = false }: { opacity: number; hq?: boolean }) {
-  const clock = useSmokeClock(hq ? 60 : 30);
+  const clock = useSmokeClock(hq ? 60 : 24);
+  const w = hq ? width : width / 2;
+  const h = hq ? height : height / 2;
   const uniforms = useDerivedValue(
-    () => ({ time: clock.value / 1000, resolution: [width, height], density: opacity }),
-    [opacity]
+    () => ({ time: clock.value / 1000, resolution: [w, h], density: opacity }),
+    [opacity, w, h]
   );
   return (
-    <Canvas style={StyleSheet.absoluteFill} pointerEvents="none">
+    <Canvas
+      style={
+        hq
+          ? StyleSheet.absoluteFill
+          : { position: 'absolute', left: 0, top: 0, width: '50%', height: '50%', transform: [{ scale: 2 }], transformOrigin: 'top left' }
+      }
+      pointerEvents="none"
+    >
       <Fill>
         <Shader source={hq ? smokeHi : smokeLo} uniforms={uniforms} />
       </Fill>

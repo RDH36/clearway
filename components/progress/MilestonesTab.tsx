@@ -1,4 +1,6 @@
+import { useEffect, useState } from 'react';
 import { ScrollView, Text, View, type ViewStyle } from 'react-native';
+import { StaggerIn } from '@/components/ui/StaggerIn';
 import { MILESTONES, next, reached, type Milestone } from '@/lib/milestones';
 import { countdownLabel } from '@/lib/format';
 import { DAY_MS } from '@/constants/time';
@@ -51,7 +53,12 @@ function PremiumPill() {
   );
 }
 
-export function MilestonesTab({ ms, quit }: { ms: number; quit: number }) {
+export function MilestonesTab({ ms, quit, visible = true }: { ms: number; quit: number; visible?: boolean }) {
+  const [rowsReady, setRowsReady] = useState(false);
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setRowsReady(true));
+    return () => cancelAnimationFrame(id);
+  }, []);
   const nx = next(ms);
   const currentId = nx && !nx.premiumLocked ? nx.id : null;
   const reachedCount = reached(ms).length;
@@ -59,15 +66,21 @@ export function MilestonesTab({ ms, quit }: { ms: number; quit: number }) {
 
   return (
     <View style={{ flex: 1 }}>
-      <Text style={{ fontFamily: fonts.body, fontSize: 14, color: '#9FB4B3', paddingTop: 4 }}>
-        {`${days} day${days === 1 ? '' : 's'} clear · ${reachedCount} of ${MILESTONES.length} reached`}
-      </Text>
+      <StaggerIn index={0} base={30} duration={240} play={visible}>
+        <Text style={{ fontFamily: fonts.body, fontSize: 14, color: '#9FB4B3', paddingTop: 4 }}>
+          {`${days} day${days === 1 ? '' : 's'} clear · ${reachedCount} of ${MILESTONES.length} reached`}
+        </Text>
+      </StaggerIn>
 
+      {!rowsReady ? (
+        <View style={{ flex: 1 }} />
+      ) : (
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingTop: 16, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
         {MILESTONES.map((m, i) => {
           const state = stateFor(m, ms, currentId);
           return (
-            <TimelineRow key={m.id} state={state} isLast={i === MILESTONES.length - 1} size={34}>
+            <StaggerIn key={m.id} index={i + 1} base={30} step={30} duration={240} play={visible}>
+            <TimelineRow state={state} isLast={i === MILESTONES.length - 1} size={34}>
               <View
                 style={[
                   {
@@ -94,9 +107,11 @@ export function MilestonesTab({ ms, quit }: { ms: number; quit: number }) {
                 {state === 'locked' ? <PremiumPill /> : null}
               </View>
             </TimelineRow>
+            </StaggerIn>
           );
         })}
       </ScrollView>
+      )}
     </View>
   );
 }
