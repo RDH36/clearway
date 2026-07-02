@@ -13,11 +13,13 @@ import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { PressablesConfig } from 'pressto';
 import { haptics, initHaptics } from '@/lib/haptics';
+import { initPurchases } from '@/lib/purchases';
 import { ThemeProvider } from '@/theme/ThemeProvider';
 
 export function AppProviders({ children }: { children: ReactNode }) {
   useEffect(() => {
     initHaptics();
+    initPurchases();
   }, []);
 
   return (

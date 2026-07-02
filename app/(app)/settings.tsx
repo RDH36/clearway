@@ -8,11 +8,12 @@ import Constants from 'expo-constants';
 import { fonts } from '@/constants/theme';
 import { useTheme } from '@/theme/ThemeProvider';
 import { useQuitStore } from '@/store/useQuitStore';
+import { usePremium } from '@/hooks/usePremium';
 import { BackIcon } from '@/components/progress/icons';
 import { Group, Row, SectionLabel, withAlpha } from '@/components/settings/SettingsGroup';
 import { Toggle } from '@/components/settings/Toggle';
 import { AppearanceRow } from '@/components/settings/AppearanceRow';
-import { PRIVACY_URL, TERMS_URL, rateApp, sendFeedback, shareApp } from '@/components/settings/actions';
+import { PRIVACY_URL, TERMS_URL, rateApp, restorePurchases, sendFeedback, shareApp } from '@/components/settings/actions';
 import { QuitDateSheet } from '@/components/settings/sheets/QuitDateSheet';
 import { CURRENCY_SYMBOL, FrequencySheet, WeeklyCostSheet } from '@/components/settings/sheets/EditValueSheets';
 import { ReminderTimeSheet, formatTime12 } from '@/components/settings/sheets/ReminderTimeSheet';
@@ -43,6 +44,7 @@ export default function Settings() {
   const setNotifications = useQuitStore((s) => s.setNotifications);
 
   const [sheet, setSheet] = useState<Sheet>(null);
+  const { isPremium, managementURL } = usePremium();
 
   const quitDateLabel = quitTimestamp
     ? new Date(quitTimestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
@@ -100,8 +102,14 @@ export default function Settings() {
           </Section>
 
           <Section label="Premium">
-            <Row label="Manage subscription" value="Free" onPress={() => router.push('/paywall')} />
-            <Row label="Restore purchases" onPress={() => {}} />
+            <Row
+              label="Manage subscription"
+              value={isPremium ? 'Premium' : 'Free'}
+              onPress={() =>
+                isPremium && managementURL ? Linking.openURL(managementURL) : router.push('/paywall')
+              }
+            />
+            <Row label="Restore purchases" onPress={() => restorePurchases()} />
           </Section>
 
           <Section label="Support">
