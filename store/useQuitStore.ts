@@ -14,6 +14,13 @@ export type Currency = 'USD' | 'GBP' | 'CAD' | 'AUD';
 export type Motivation = 'health' | 'money' | 'control' | 'someone';
 export type ThemePref = 'light' | 'dark' | 'system';
 
+export type Reason = {
+  id: string;
+  glyph: string;
+  title: string;
+  note: string;
+};
+
 export type NotificationPrefs = {
   enabled: boolean;
   dailyTime: string; // "HH:mm"
@@ -33,7 +40,7 @@ export type QuitState = {
   vapingDuration: string; // Q2 answer
   usageFrequency: string; // Q3 answer
   worstCravingTime: string; // Q5 answer
-  reasons: string[]; // "my why" cards, editable
+  reasons: Reason[];
 
   // app
   onboardingComplete: boolean;
@@ -53,7 +60,10 @@ export type QuitActions = {
   setOnboardingComplete: (value: boolean) => void;
   setThemePref: (pref: ThemePref) => void;
   setBreathSound: (value: boolean) => void;
-  setReasons: (reasons: string[]) => void;
+  setReasons: (reasons: Reason[]) => void;
+  addReason: (reason: Reason) => void;
+  updateReason: (id: string, patch: Partial<Omit<Reason, 'id'>>) => void;
+  removeReason: (id: string) => void;
   setNotifications: (patch: Partial<NotificationPrefs>) => void;
   markReviewRequested: () => void;
   /** Patch onboarding-quiz answers as they're tapped (spec §4). */
@@ -115,6 +125,12 @@ export const useQuitStore = create<Store>()(
       setThemePref: (themePref) => set({ themePref }),
       setBreathSound: (breathSound) => set({ breathSound }),
       setReasons: (reasons) => set({ reasons }),
+      addReason: (reason) => set((s) => ({ reasons: [...s.reasons, reason] })),
+      updateReason: (id, patch) =>
+        set((s) => ({
+          reasons: s.reasons.map((r) => (r.id === id ? { ...r, ...patch } : r)),
+        })),
+      removeReason: (id) => set((s) => ({ reasons: s.reasons.filter((r) => r.id !== id) })),
       setNotifications: (patch) =>
         set((s) => ({ notifications: { ...s.notifications, ...patch } })),
       markReviewRequested: () => set({ hasRequestedReview: true }),
@@ -123,7 +139,12 @@ export const useQuitStore = create<Store>()(
     }),
     {
       name: 'clearway-quit-store',
-      version: 1,
+      version: 2,
+      migrate: (persisted, version) => {
+        const state = persisted as Partial<QuitState>;
+        if (version < 2) return { ...state, reasons: [] };
+        return state;
+      },
       storage: createJSONStorage(() => AsyncStorage),
       // Don't persist transient flags or the actions.
       partialize: ({ _hasHydrated, ...rest }) => rest,

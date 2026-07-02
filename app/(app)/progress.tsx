@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -8,6 +8,7 @@ import { PressableScale } from 'pressto';
 import { useNow } from '@/hooks/useNow';
 import { useQuitStore } from '@/store/useQuitStore';
 import { msClean } from '@/lib/time';
+import { fonts } from '@/constants/theme';
 import { Atmosphere } from '@/components/home/Atmosphere';
 import { ProgressTabs, type ProgressTab } from '@/components/progress/ProgressTabs';
 import { MilestonesTab } from '@/components/progress/MilestonesTab';
@@ -73,13 +74,17 @@ export default function Progress() {
           paddingBottom: insets.bottom,
         }}
       >
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 18 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 14 }}>
           <PressableScale onPress={() => router.back()} style={BTN}>
             <BackIcon />
           </PressableScale>
-          <View style={{ flex: 1 }}>
-            <ProgressTabs value={tab} onChange={setTab} />
-          </View>
+          <Text style={{ fontFamily: fonts.displaySemibold, fontSize: 27, color: '#EAF4F2', letterSpacing: -0.4 }}>
+            Progress
+          </Text>
+        </View>
+
+        <View style={{ marginBottom: 18 }}>
+          <ProgressTabs value={tab} onChange={setTab} />
         </View>
 
         <View style={{ flex: 1, display: tab === 'milestones' ? 'flex' : 'none' }}>

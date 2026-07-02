@@ -3,7 +3,7 @@
  * money, milestone ring and clearing atmosphere all derive from quitTimestamp
  * (Step 2 logic) every tick. Overlay actions route to placeholders for now.
  */
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Text, View, type ViewStyle } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -18,6 +18,8 @@ import { clarity } from '@/lib/atmosphere';
 import { formatMoney } from '@/lib/format';
 import { darkColors, fonts } from '@/constants/theme';
 import { Atmosphere } from '@/components/home/Atmosphere';
+import { WhyCard } from '@/components/reasons/WhyCard';
+import { seedReason } from '@/components/reasons/seeds';
 import { HomeHeader } from '@/components/home/HomeHeader';
 import { HeroCounter } from '@/components/home/HeroCounter';
 import { StatsRow } from '@/components/home/StatsRow';
@@ -49,6 +51,7 @@ export default function Home() {
   const now = useNow(60000);
   const focused = useScreenFocused();
   const [navigating, setNavigating] = useState(false);
+  const [rotation, setRotation] = useState(0);
   const go = (href: Parameters<typeof router.push>[0]) => {
     setNavigating(true);
     router.push(href);
@@ -56,12 +59,23 @@ export default function Home() {
   useFocusEffect(
     useCallback(() => {
       setNavigating(false);
+      setRotation((r) => r + 1);
     }, [])
   );
+  useEffect(() => {
+    if (!focused) return;
+    const id = setInterval(() => setRotation((r) => r + 1), 10000);
+    return () => clearInterval(id);
+  }, [focused]);
 
   const quit = useQuitStore((s) => s.quitTimestamp);
   const weekly = useQuitStore((s) => s.weeklySpend);
+  const reasons = useQuitStore((s) => s.reasons);
+  const motivation = useQuitStore((s) => s.primaryMotivation);
   const ms = msClean(quit, now);
+
+  const pool = reasons.length > 0 ? reasons : [seedReason(motivation, weekly)];
+  const reason = pool[rotation % pool.length];
 
   // Capped at 99% — the haze never fully clears (a wisp always remains), so the
   // reading stays honest and keeps a little "more to clear" motivation.
@@ -93,6 +107,8 @@ export default function Home() {
         <HeroCounter quit={quit} statusCopy={statusFor(ms)} />
 
         <View style={{ gap: 12 }}>
+          <WhyCard reason={reason} onPress={() => go('/reasons')} />
+
           <StatsRow
             money={formatMoney(moneySaved(weekly, ms))}
             clearedPct={cleared}

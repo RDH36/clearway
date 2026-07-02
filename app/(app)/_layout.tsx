@@ -21,7 +21,16 @@ export default function AppLayout() {
           gestureDirection: 'horizontal',
         }}
       />
-      <Stack.Screen name="reasons" />
+      <Stack.Screen
+        name="reasons"
+        options={{
+          animation: 'slide_from_right',
+          animationDuration: 320,
+          gestureEnabled: true,
+          gestureDirection: 'horizontal',
+          contentStyle: { backgroundColor: '#0E1B1F' },
+        }}
+      />
       <Stack.Screen name="settings" />
       <Stack.Screen
         name="craving"
@@ -33,7 +42,17 @@ export default function AppLayout() {
           gestureDirection: 'vertical',
         }}
       />
-      <Stack.Screen name="reset" options={{ presentation: 'modal' }} />
+      <Stack.Screen
+        name="reset"
+        options={{
+          presentation: 'transparentModal',
+          animation: 'fade',
+          animationDuration: 220,
+          gestureEnabled: true,
+          gestureDirection: 'vertical',
+          contentStyle: { backgroundColor: 'transparent' },
+        }}
+      />
       <Stack.Screen name="paywall" options={{ presentation: 'modal' }} />
     </Stack>
   );

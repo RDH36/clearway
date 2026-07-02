@@ -61,6 +61,8 @@ Premium status is a **separate** source of truth: the RevenueCat `premium` entit
 ## 2. Data model (Zustand store, persisted to AsyncStorage)
 
 ```ts
+type Reason = { id: string; glyph: string; title: string; note: string };  // §15 — structured "my why" card
+
 type QuitState = {
   // core
   quitTimestamp: number | null;      // UTC ms; null until onboarding done
@@ -72,7 +74,7 @@ type QuitState = {
   primaryMotivation: 'health' | 'money' | 'control' | 'someone';
   usageFrequency: string;            // Q3 answer
   worstCravingTime: string;          // Q5 answer
-  reasons: string[];                 // "my why" cards, editable
+  reasons: Reason[];                 // "my why" cards, editable (was string[] — see §15; persist v2 + migrate)
 
   // app
   onboardingComplete: boolean;
@@ -140,12 +142,11 @@ app/
     paywall.tsx                // A5 (soft, dismissable)
   (app)/
     _layout.tsx                // main stack
-    index.tsx                  // B1 Home (hero)
-    milestones.tsx             // B2
-    health.tsx                 // B3
+    index.tsx                  // B1 Home (hero) + "My why" card (§15)
+    progress.tsx               // B2+B3 — Milestones/Recovery tabs (replaced milestones.tsx + health.tsx, see §15)
     craving.tsx                // B4 (presented as modal sheet)
-    reset.tsx                  // B5 (confirm sheet)
-    reasons.tsx                // B6
+    reset.tsx                  // B6 — transparent half-sheet over Home (§15)
+    reasons.tsx                // B5 — editable "my why" cards (§15)
     settings.tsx               // D
     paywall.tsx                // C1 (modal, reused for all triggers)
 ```
@@ -330,3 +331,40 @@ Additions/changes made while building Home + the onboarding funnel that were **n
 - `clearway-design-brief/` (the exported Claude Design mockups) is gitignored — source mockups, not app code.
 
 **Still deferred (per spec):** RevenueCat / real purchases (Step 6) — the A5 paywall is visual-only; × and CTA both just finish onboarding.
+
+---
+
+## 15. Post-spec changes (Step 5 Progress + Step 5b Reset/Reasons — as built)
+
+**Progress screen (B2+B3) — merged into one tabbed screen**
+- `app/(app)/progress.tsx` replaces `milestones.tsx` + `health.tsx`: "Milestones" / "Recovery" segmented tabs, opened from Home's top-right icon and the stats ring. Route: `slide_from_right`, 320 ms.
+- Both tabs stay **mounted** (visibility via `display`) — a tab switch never remounts (remounting the ~70-view timeline cost 4 s+ on the test device); Recovery pre-warms hidden 700 ms after entry; scroll positions survive switches.
+- **No smoke on this screen** (`Atmosphere smoke={false}` — gradients + scrim only; product call: the stagger IS the premium feel here). Timeline rows mount one frame late (`rowsReady` rAF) behind the stagger.
+- `components/progress/` — ProgressTabs, TimelineRow (pulsing "current" node), MilestonesTab, RecoveryTab, icons. Reached = aqua/lit, current pulses, **>1 mo = frosted lock + "Air not yet cleared" + Premium pill**; free upcoming milestones show a countdown instead (the premium wording appears ONLY on actually-locked items). Recovery rows show real countdowns via `lib/format.durationLabel`/`countdownLabel`.
+
+**Animation & perf doctrine (Android mid-range — hard-won, follow it)**
+- **NEVER** Reanimated `entering`/`exiting` on a native-stack pushed screen → lag + black screen during the slide. Element appearance = `components/ui/StaggerIn.tsx`: a *manual* shared-value fade/lift with per-index delay; its `play` prop replays the cascade without remounting (used on tab switches).
+- Push transitions: `slide_from_right` / `slide_from_bottom`, `animationDuration: 320` (craving's original 750 ms felt like button lag).
+- **Tick isolation**: the 250 ms clock lives *inside* `HeroCounter`; screens tick `useNow(60000)`. Home re-renders 1×/min instead of 4×/s — this was the main tap-latency fix.
+- **Smoke cost**: `SmokeSkia` non-hq renders at half resolution (canvas styled `50%` + `scale: 2`, `transformOrigin 'top left'` — size in **percent**, not window dims, which left an uncovered strip at the bottom) at 24 fps. Home kills its smoke the instant a nav starts (`navigating` state) and fades it back on focus (`SmokeFade`). `Atmosphere`'s gradient layers merged into 2 `<Svg>` views (was 4).
+
+**Store (§2)**
+- `reasons: string[]` → `Reason[]` `{ id, glyph, title, note }`; persist bumped to `version: 2` with a `migrate` (v1 arrays reset to `[]` — they were never populated). New actions: `addReason`, `updateReason(id, patch)`, `removeReason(id)`.
+
+**Reset (B6) — transparent half-sheet over the live Home, not a full screen**
+- Route: `presentation: 'transparentModal'` + `animation: 'fade'` (220 ms) + transparent `contentStyle`. The **real Home** (live counter) stays visible behind a radial veil; tapping the veil dismisses. The sheet slides in via manual Reanimated (translateY, 340 ms, ease-out) — not the route animation (that would slide the veil too).
+- Sheet skin: bg `#152A31`, border `#3C5E68` top+sides (a drop-shadow gradient band above was tried and rejected — hard edge). Trophy card shows `max(longestStreakMs, current)` in days; confirm = `haptics.resetConfirm()` + `slip()` + back. Longest streak survives, per §2.
+- **GOTCHA (Android):** RNGH-based pressables (pressto) inside a `transparentModal` or RN `Modal` receive **no touches** — taps fall through to the backdrop (symptom: "reset does nothing", the sheet just closes). Fix: wrap the modal content in its own `<GestureHandlerRootView>`. Applies to every future overlay.
+
+**Reasons (B5) — editable, seeded, keyboard-safe**
+- First open seeds one card from `primaryMotivation` (money copy uses the real `projectedYear`) — `components/reasons/seeds.ts`.
+- `ReasonCard` is **display-only** (title + note as Texts); the pencil opens the edit modal, the trash deletes (`removeReason`).
+- **Adding AND editing go through the same sheet** — `components/reasons/ReasonModal.tsx`: bottom sheet (Reset skin) with a glyph picker (✦ ✚ ♡ ◎ $ ★) + title + note; `initial` prop switches New/Edit mode (the form remounts fresh each open — conditional render).
+- **The sheet is rendered IN-TREE (absoluteFill overlay), NOT inside an RN `<Modal>`.** An RN Modal is a separate Android window that escapes the `KeyboardProvider`: it does its own `adjustResize` AND the manual translate stacks on top → double shift, a gap between sheet and keyboard (the recurring bug already fixed in money-tracking's `BottomSheet.tsx`). In-tree also means no local `GestureHandlerRootView` is needed.
+- **Sheet animations are manual**: one shared value drives backdrop fade + sheet slide on open (300 ms) AND on close (220 ms, `closing` state; `onClose` fires after the out-animation via setTimeout).
+- **Keyboard handling MUST use react-native-keyboard-controller**: the screen list scrolls with its `KeyboardAwareScrollView` (`bottomOffset`); the sheet rides the keyboard via the **`useReanimatedKeyboardAnimation` hook** (sheet translateY += `keyboard.height.value`). Do not swap any of it for the RN built-ins.
+- Screen: atmosphere without smoke + shared `components/ui/Scrim.tsx`, StaggerIn cascade, `slide_from_right` 320 ms.
+
+**Home — "My why" card (new, above the Saved/Next cards)**
+- `components/reasons/WhyCard.tsx`: same card skin as the stats cards, one slim row — glyph tile + MY WHY eyebrow + one-line reason + a "+" affordance. The whole card is a single PressableScale → `/reasons` (press spring + global haptic).
+- Pulls real store reasons; falls back to the motivation seed (display-only) when empty. **Rotates on every Home focus AND every 10 s** (interval paused while unfocused). Each swap plays a mini ClearBurst — aqua radial burst + two grey vapor puffs + a content cross-fade — clipped inside the card so it never competes with the hero or the atmosphere.
