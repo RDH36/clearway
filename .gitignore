@@ -22,3 +22,4 @@ expo-env.d.ts
 
 # Design handoff bundle (source mockups, not app code)
 clearway-design-brief/
+modules/*/android/build/
