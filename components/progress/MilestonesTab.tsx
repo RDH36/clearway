@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import { ScrollView, Text, View, type ViewStyle } from 'react-native';
+import { PressableScale } from 'pressto';
 import { StaggerIn } from '@/components/ui/StaggerIn';
 import { MILESTONES, next, reached, type Milestone } from '@/lib/milestones';
 import { countdownLabel } from '@/lib/format';
 import { DAY_MS } from '@/constants/time';
 import { fonts } from '@/constants/theme';
 import { TimelineRow, type NodeState } from './TimelineRow';
-import { LockIcon } from './icons';
+import { PremiumPill } from './PremiumPill';
 
 const CARD_VARIANT: Record<NodeState, ViewStyle> = {
   current: { backgroundColor: 'rgba(91,224,198,0.09)', borderColor: 'rgba(91,224,198,0.3)' },
@@ -15,9 +16,9 @@ const CARD_VARIANT: Record<NodeState, ViewStyle> = {
   idle: { backgroundColor: 'rgba(22,40,46,0.72)', borderColor: '#23383E' },
 };
 
-function stateFor(m: Milestone, ms: number, currentId: string | null): NodeState {
+function stateFor(m: Milestone, ms: number, currentId: string | null, isPremium: boolean): NodeState {
   if (ms >= m.atMs) return 'reached';
-  if (m.premiumLocked) return 'locked';
+  if (m.premiumLocked && !isPremium) return 'locked';
   return m.id === currentId ? 'current' : 'idle';
 }
 
@@ -30,37 +31,26 @@ function subFor(m: Milestone, state: NodeState, ms: number, quit: number): strin
   return countdownLabel(m.atMs - ms);
 }
 
-function PremiumPill() {
-  return (
-    <View
-      style={{
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 5,
-        paddingVertical: 4,
-        paddingHorizontal: 9,
-        borderRadius: 20,
-        backgroundColor: 'rgba(150,170,172,0.16)',
-        borderWidth: 1,
-        borderColor: 'rgba(150,170,172,0.22)',
-      }}
-    >
-      <LockIcon size={11} color="#AFC4C2" />
-      <Text style={{ fontFamily: fonts.mono, fontSize: 9, letterSpacing: 1, color: '#AFC4C2', textTransform: 'uppercase' }}>
-        Premium
-      </Text>
-    </View>
-  );
-}
-
-export function MilestonesTab({ ms, quit, visible = true }: { ms: number; quit: number; visible?: boolean }) {
+export function MilestonesTab({
+  ms,
+  quit,
+  visible = true,
+  isPremium = false,
+  onLockedPress,
+}: {
+  ms: number;
+  quit: number;
+  visible?: boolean;
+  isPremium?: boolean;
+  onLockedPress?: () => void;
+}) {
   const [rowsReady, setRowsReady] = useState(false);
   useEffect(() => {
     const id = requestAnimationFrame(() => setRowsReady(true));
     return () => cancelAnimationFrame(id);
   }, []);
   const nx = next(ms);
-  const currentId = nx && !nx.premiumLocked ? nx.id : null;
+  const currentId = nx && (isPremium || !nx.premiumLocked) ? nx.id : null;
   const reachedCount = reached(ms).length;
   const days = Math.floor(ms / DAY_MS);
 
@@ -77,35 +67,42 @@ export function MilestonesTab({ ms, quit, visible = true }: { ms: number; quit: 
       ) : (
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingTop: 16, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
         {MILESTONES.map((m, i) => {
-          const state = stateFor(m, ms, currentId);
+          const state = stateFor(m, ms, currentId, isPremium);
+          const card = (
+            <View
+              style={[
+                {
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: 10,
+                  paddingVertical: 14,
+                  paddingHorizontal: 16,
+                  borderRadius: 16,
+                  borderWidth: 1,
+                },
+                CARD_VARIANT[state],
+              ]}
+            >
+              <View style={{ flex: 1, gap: 2 }}>
+                <Text style={{ fontFamily: fonts.bodySemibold, fontSize: 16, color: state === 'locked' ? '#AFC4C2' : '#EAF4F2' }}>
+                  {m.label}
+                </Text>
+                <Text style={{ fontFamily: fonts.body, fontSize: 13, color: '#9FB4B3' }}>
+                  {subFor(m, state, ms, quit)}
+                </Text>
+              </View>
+              {state === 'locked' ? <PremiumPill /> : null}
+            </View>
+          );
           return (
             <StaggerIn key={m.id} index={i + 1} base={30} step={30} duration={240} play={visible}>
             <TimelineRow state={state} isLast={i === MILESTONES.length - 1} size={34}>
-              <View
-                style={[
-                  {
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: 10,
-                    paddingVertical: 14,
-                    paddingHorizontal: 16,
-                    borderRadius: 16,
-                    borderWidth: 1,
-                  },
-                  CARD_VARIANT[state],
-                ]}
-              >
-                <View style={{ flex: 1, gap: 2 }}>
-                  <Text style={{ fontFamily: fonts.bodySemibold, fontSize: 16, color: state === 'locked' ? '#AFC4C2' : '#EAF4F2' }}>
-                    {m.label}
-                  </Text>
-                  <Text style={{ fontFamily: fonts.body, fontSize: 13, color: '#9FB4B3' }}>
-                    {subFor(m, state, ms, quit)}
-                  </Text>
-                </View>
-                {state === 'locked' ? <PremiumPill /> : null}
-              </View>
+              {state === 'locked' && onLockedPress ? (
+                <PressableScale onPress={onLockedPress}>{card}</PressableScale>
+              ) : (
+                card
+              )}
             </TimelineRow>
             </StaggerIn>
           );

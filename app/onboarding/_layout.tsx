@@ -14,13 +14,17 @@ export default function OnboardingLayout() {
           headerShown: false,
           gestureEnabled: false,
           animation: 'none',
+          navigationBarTranslucent: true,
+          navigationBarColor: 'transparent',
         }}
       >
         <Stack.Screen name="welcome" />
         <Stack.Screen name="quiz" />
         <Stack.Screen name="empathy" />
         <Stack.Screen name="solution" />
+        <Stack.Screen name="reasons" />
         <Stack.Screen name="wow" />
+        <Stack.Screen name="setup" />
         <Stack.Screen name="paywall" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
       </Stack>
     </>

@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 import { PressableScale } from 'pressto';
 import { useNow } from '@/hooks/useNow';
+import { usePremium } from '@/hooks/usePremium';
 import { useQuitStore } from '@/store/useQuitStore';
 import { msClean } from '@/lib/time';
 import { fonts } from '@/constants/theme';
@@ -51,6 +52,7 @@ export default function Progress() {
   const insets = useSafeAreaInsets();
   const now = useNow(60000);
   const quit = useQuitStore((s) => s.quitTimestamp);
+  const { isPremium } = usePremium();
   const ms = msClean(quit, now);
   const [tab, setTab] = useState<ProgressTab>('milestones');
   const [warm, setWarm] = useState(false);
@@ -88,11 +90,22 @@ export default function Progress() {
         </View>
 
         <View style={{ flex: 1, display: tab === 'milestones' ? 'flex' : 'none' }}>
-          <MilestonesTab ms={ms} quit={quit ?? 0} visible={tab === 'milestones'} />
+          <MilestonesTab
+            ms={ms}
+            quit={quit ?? 0}
+            visible={tab === 'milestones'}
+            isPremium={isPremium}
+            onLockedPress={() => router.push('/paywall')}
+          />
         </View>
         {warm || tab === 'recovery' ? (
           <View style={{ flex: 1, display: tab === 'recovery' ? 'flex' : 'none' }}>
-            <RecoveryTab ms={ms} visible={tab === 'recovery'} />
+            <RecoveryTab
+              ms={ms}
+              visible={tab === 'recovery'}
+              isPremium={isPremium}
+              onLockedPress={() => router.push('/paywall')}
+            />
           </View>
         ) : null}
       </View>

@@ -9,7 +9,7 @@
  * A scrim (design textScrim) darkens the fog behind the content — it strengthens
  * with the haze so the locked cards stay legible even at full smoke.
  */
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -25,10 +25,16 @@ import { PressableScale } from 'pressto';
 import { useNow } from '@/hooks/useNow';
 import { useAfterTransition } from '@/hooks/useAfterTransition';
 import { useBreathPhase } from '@/hooks/useBreathPhase';
+import { usePremium } from '@/hooks/usePremium';
 import { useQuitStore } from '@/store/useQuitStore';
 import { msClean } from '@/lib/time';
 import { clarity } from '@/lib/atmosphere';
 import { primeBreathCue } from '@/lib/sound';
+import { patternById, type PatternId } from '@/lib/breathing';
+import { pickAffirmation, reasonLabel } from '@/lib/affirmations';
+import { formatMoney } from '@/lib/format';
+import { moneySaved } from '@/lib/money';
+import { DAY_MS, HOUR_MS } from '@/constants/time';
 import { fonts } from '@/constants/theme';
 import { Atmosphere } from '@/components/home/Atmosphere';
 import { BreathingOrb } from '@/components/craving/BreathingOrb';
@@ -62,9 +68,26 @@ export default function Craving() {
   const quit = useQuitStore((s) => s.quitTimestamp);
   const breathSound = useQuitStore((s) => s.breathSound);
   const setBreathSound = useQuitStore((s) => s.setBreathSound);
+  const motivation = useQuitStore((s) => s.primaryMotivation);
+  const weekly = useQuitStore((s) => s.weeklySpend);
+  const firstReason = useQuitStore((s) => s.reasons[0]?.title);
+  const { isPremium } = usePremium();
   const ms = msClean(quit, now);
   const smokeOn = useAfterTransition();
-  const breath = useBreathPhase(breathSound);
+  const [patternId, setPatternId] = useState<PatternId>('calm478');
+  const pattern = patternById(patternId);
+  const breath = useBreathPhase(breathSound && isPremium, true, pattern);
+
+  const affirmation = isPremium
+    ? pickAffirmation({
+        motivation,
+        moment: 'craving',
+        seed: Math.floor(ms / HOUR_MS),
+        reason: reasonLabel(firstReason, motivation),
+        days: Math.max(1, Math.floor(ms / DAY_MS)),
+        money: formatMoney(moneySaved(weekly, ms)),
+      })
+    : null;
 
   useEffect(() => {
     primeBreathCue();
@@ -106,28 +129,52 @@ export default function Craving() {
               Ride it out
             </Text>
             <View style={{ flex: 1, alignItems: 'flex-end', transform: [{ translateY: 10 }] }}>
-              <SoundToggle value={breathSound} onChange={setBreathSound} />
+              <SoundToggle
+                value={breathSound && isPremium}
+                onChange={(v) => (isPremium ? setBreathSound(v) : router.push('/paywall'))}
+              />
             </View>
           </View>
           <Text style={{ fontFamily: fonts.mono, fontSize: 11, letterSpacing: 2, color: '#7E9A9B', textTransform: 'uppercase', textAlign: 'center' }}>
-            4 · 7 · 8 breathing
+            {pattern.eyebrow}
           </Text>
         </View>
 
         <View
           style={{ alignItems: 'center', justifyContent: 'center', gap: 22, paddingVertical: 20 }}
         >
-          <BreathingOrb phase={breath.phase} />
+          <BreathingOrb phase={breath.phase} durationMs={breath.durationMs} />
           <View style={{ alignItems: 'center', gap: 6 }}>
             <Animated.Text style={[{ fontFamily: fonts.displaySemibold, fontSize: 26, color: '#EAF4F2' }, labelStyle]}>
               {breath.label}
             </Animated.Text>
             <Text style={{ fontFamily: fonts.mono, fontSize: 16, color: '#5BE0C6' }}>{breath.count}</Text>
+            {affirmation ? (
+              <Text
+                style={{
+                  fontFamily: fonts.body,
+                  fontSize: 13,
+                  lineHeight: 19,
+                  color: '#9FB4B3',
+                  textAlign: 'center',
+                  maxWidth: 280,
+                  paddingTop: 4,
+                }}
+              >
+                {affirmation.text}
+              </Text>
+            ) : null}
           </View>
         </View>
 
         <View style={{ flex: 1 }}>
-          <CraveKit haze={haze} />
+          <CraveKit
+            haze={haze}
+            isPremium={isPremium}
+            activeId={patternId}
+            onSelect={(p) => setPatternId(p.id)}
+            onLockedPress={() => router.push('/paywall')}
+          />
         </View>
 
         <View>

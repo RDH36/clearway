@@ -77,7 +77,7 @@ export default function Wow() {
     );
   };
 
-  const openPaywall = useCallback(() => router.push('/onboarding/paywall'), [router]);
+  const openPaywall = useCallback(() => router.push('/onboarding/setup'), [router]);
   const orbStyle = useAnimatedStyle(() => ({ transform: [{ scale: orb.value }] }));
   const ms = msClean(quit, now);
   const { days } = formatClean(ms);

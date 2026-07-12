@@ -9,11 +9,13 @@
  * surface without it (web) we no-op instead of throwing.
  *
  * Basic Android actuators (ERM, support level <= 1) can't render pulsar's subtle
- * iOS-style transients — `selection` / `impactSoft` come out imperceptible there.
- * On those we swap in the strongest single-click effect so every press is felt;
- * iOS and Android LRA keep the premium subtle presets.
+ * iOS-style transients, and some MIUI firmwares don't implement the prebaked
+ * system effects either (effectClick/effectHeavyClick are silent). Timed
+ * vibrations are the only thing guaranteed to fire there, so weak devices fall
+ * back to RN's Vibration with short pulses; iOS and Android LRA keep the
+ * premium subtle presets.
  */
-import { Platform } from 'react-native';
+import { Platform, Vibration } from 'react-native';
 import { Presets, Settings } from 'react-native-pulsar';
 
 let supportLevel = 3;
@@ -40,18 +42,15 @@ export function initHaptics() {
 export const haptics = {
   /** Global selection tick on every press. */
   tap: () =>
-    safe('tap', () =>
-      weakAndroid() ? Presets.System.Android.effectHeavyClick() : Presets.System.selection()
-    ),
+    safe('tap', () => (weakAndroid() ? Vibration.vibrate(28) : Presets.System.selection())),
   /** Milestone reached — the pride beat. */
   milestone: () => safe('milestone', () => Presets.System.notificationSuccess()),
   /** A soft tick on each 4-7-8 breathing phase change. */
-  breathPhase: () => safe('breathPhase', () => Presets.breath()),
+  breathPhase: () =>
+    safe('breathPhase', () => (weakAndroid() ? Vibration.vibrate(18) : Presets.breath())),
   /** Gentle confirmation on reset / "I slipped". */
   resetConfirm: () =>
-    safe('resetConfirm', () =>
-      weakAndroid() ? Presets.System.Android.effectHeavyClick() : Presets.System.impactSoft()
-    ),
+    safe('resetConfirm', () => (weakAndroid() ? Vibration.vibrate(45) : Presets.System.impactSoft())),
   /** Confirmation on purchase success. */
   purchaseSuccess: () => safe('purchaseSuccess', () => Presets.System.notificationSuccess()),
 };

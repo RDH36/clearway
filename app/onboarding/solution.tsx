@@ -88,7 +88,7 @@ export default function Solution() {
           Built on the science of how nicotine leaves your body.
         </Animated.Text>
       </View>
-      <Cta label="Build my plan →" onPress={() => router.replace('/onboarding/wow')} />
+      <Cta label="Build my plan →" onPress={() => router.replace('/onboarding/reasons')} />
     </Shell>
   );
 }

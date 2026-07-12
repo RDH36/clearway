@@ -1,74 +1,63 @@
 import { useCallback, useState } from 'react';
-import { Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Animated, { FadeIn, SlideInDown } from 'react-native-reanimated';
 import { PressableScale } from 'pressto';
 import { useQuitStore } from '@/store/useQuitStore';
 import { useNow } from '@/hooks/useNow';
 import { msClean } from '@/lib/time';
+import { haptics } from '@/lib/haptics';
 import { Cta } from '@/components/onboarding/Cta';
+import { PlanPicker, type Plan } from '@/components/paywall/PlanPicker';
 import { TransitionLoader } from '@/components/splash/TransitionLoader';
 import { fonts } from '@/constants/theme';
 
-type Plan = 'annual' | 'monthly' | 'lifetime';
-
 const pad = (n: number) => String(n).padStart(2, '0');
 
-function Radio({ on }: { on: boolean }) {
+function TrialOfferSheet({ onAccept, onDecline }: { onAccept: () => void; onDecline: () => void }) {
+  const insets = useSafeAreaInsets();
   return (
-    <View
-      style={{
-        width: 22,
-        height: 22,
-        borderRadius: 11,
-        borderWidth: on ? 6 : 2,
-        borderColor: on ? '#5BE0C6' : '#3A5258',
-        backgroundColor: on ? '#08221D' : 'transparent',
-      }}
-    />
-  );
-}
-
-function PlanRow({
-  selected,
-  onPress,
-  title,
-  price,
-  badge,
-}: {
-  selected: boolean;
-  onPress: () => void;
-  title: string;
-  price: string;
-  badge?: string;
-}) {
-  return (
-    <PressableScale
-      onPress={onPress}
-      style={{
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: 15,
-        borderRadius: 18,
-        borderWidth: 1,
-        backgroundColor: selected ? 'rgba(91,224,198,0.1)' : 'rgba(22,40,46,0.7)',
-        borderColor: selected ? '#5BE0C6' : '#23383E',
-      }}
-    >
-      <View style={{ gap: 2 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          <Text style={{ fontFamily: fonts.bodySemibold, fontSize: 16, color: '#EAF4F2' }}>{title}</Text>
-          {badge ? (
-            <Text style={{ fontFamily: fonts.mono, fontSize: 9, letterSpacing: 1, color: '#0E1B1F', backgroundColor: '#5BE0C6', borderRadius: 5, paddingHorizontal: 6, paddingVertical: 2, overflow: 'hidden' }}>
-              {badge}
+    <View style={[StyleSheet.absoluteFill, { zIndex: 10 }]}>
+      <Animated.View entering={FadeIn.duration(220)} style={StyleSheet.absoluteFill}>
+        <Pressable style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(8,18,22,0.85)' }]} onPress={onDecline} />
+      </Animated.View>
+      <View style={{ flex: 1, justifyContent: 'flex-end' }} pointerEvents="box-none">
+        <Animated.View
+          entering={SlideInDown.duration(320)}
+          style={{
+            backgroundColor: '#152A31',
+            borderWidth: 1,
+            borderBottomWidth: 0,
+            borderColor: '#3C5E68',
+            borderTopLeftRadius: 30,
+            borderTopRightRadius: 30,
+            paddingTop: 14,
+            paddingHorizontal: 26,
+            paddingBottom: insets.bottom + 28,
+            alignItems: 'center',
+            gap: 16,
+          }}
+        >
+          <View style={{ width: 38, height: 5, borderRadius: 3, backgroundColor: '#2C474E' }} />
+          <Text style={{ fontSize: 26, color: '#5BE0C6', lineHeight: 30 }}>✦</Text>
+          <View style={{ alignItems: 'center', gap: 8 }}>
+            <Text style={{ fontFamily: fonts.displaySemibold, fontSize: 24, color: '#EAF4F2', letterSpacing: -0.4, textAlign: 'center' }}>
+              The first step deserves a gift.
             </Text>
-          ) : null}
-        </View>
-        <Text style={{ fontFamily: fonts.body, fontSize: 13, color: '#7E9A9B' }}>{price}</Text>
+            <Text style={{ fontFamily: fonts.body, fontSize: 15, lineHeight: 22, color: '#C7D6D4', textAlign: 'center', maxWidth: 300 }}>
+              {"Here's 3 days of Clearway premium — free, no card needed. Live it, then decide."}
+            </Text>
+          </View>
+          <View style={{ alignSelf: 'stretch', gap: 10 }}>
+            <Cta label="Start my 3 free days" onPress={onAccept} />
+            <PressableScale onPress={onDecline} style={{ height: 48, alignItems: 'center', justifyContent: 'center' }}>
+              <Text style={{ fontFamily: fonts.bodySemibold, fontSize: 15, color: '#9FB4B3' }}>No thanks</Text>
+            </PressableScale>
+          </View>
+        </Animated.View>
       </View>
-      <Radio on={selected} />
-    </PressableScale>
+    </View>
   );
 }
 
@@ -77,9 +66,13 @@ export default function Paywall() {
   const insets = useSafeAreaInsets();
   const setOnboardingComplete = useQuitStore((s) => s.setOnboardingComplete);
   const quit = useQuitStore((s) => s.quitTimestamp);
+  const trialUsed = useQuitStore((s) => s.trialUsed);
+  const startTrial = useQuitStore((s) => s.startTrial);
+  const firstReason = useQuitStore((s) => s.reasons[0]?.title?.trim());
   const now = useNow(250);
   const [plan, setPlan] = useState<Plan>('annual');
   const [entering, setEntering] = useState(false);
+  const [offering, setOffering] = useState(false);
 
   const sec = Math.floor(msClean(quit, now) / 1000);
   const hms = `${pad(Math.floor(sec / 3600))} : ${pad(Math.floor((sec % 3600) / 60))} : ${pad(sec % 60)}`;
@@ -89,6 +82,16 @@ export default function Paywall() {
   // enterHome MUST be stable — the paywall re-renders every 250ms (useNow), and
   // an unstable onDone would restart the loader's timer forever (never fires).
   const finish = () => setEntering(true);
+  const dismiss = () => {
+    if (!trialUsed) setOffering(true);
+    else finish();
+  };
+  const acceptTrial = () => {
+    startTrial();
+    haptics.purchaseSuccess();
+    setOffering(false);
+    finish();
+  };
   const enterHome = useCallback(() => {
     setOnboardingComplete(true);
     router.replace('/');
@@ -99,7 +102,7 @@ export default function Paywall() {
   return (
     <View style={{ flex: 1, backgroundColor: '#0B181C', paddingTop: insets.top + 8, paddingBottom: insets.bottom + 20, paddingHorizontal: 24 }}>
       <PressableScale
-        onPress={finish}
+        onPress={dismiss}
         style={{ position: 'absolute', top: insets.top + 8, right: 22, width: 38, height: 38, borderRadius: 19, borderWidth: 1, borderColor: '#23383E', backgroundColor: 'rgba(22,40,46,0.7)', alignItems: 'center', justifyContent: 'center', zIndex: 2 }}
       >
         <Text style={{ fontSize: 18, color: '#9FB2B1' }}>×</Text>
@@ -111,17 +114,17 @@ export default function Paywall() {
             <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: '#5BE0C6' }} />
             <Text style={{ fontFamily: fonts.mono, fontSize: 11, letterSpacing: 1, color: '#5BE0C6' }}>{hms} · running</Text>
           </View>
-          <Text style={{ fontFamily: fonts.displaySemibold, fontSize: 27, lineHeight: 31, color: '#EAF4F2', letterSpacing: -0.4 }}>Your plan is ready.</Text>
+          <Text style={{ fontFamily: fonts.displaySemibold, fontSize: 27, lineHeight: 31, color: '#EAF4F2', letterSpacing: -0.4 }}>
+            {"Don't stop what you just started."}
+          </Text>
           <Text style={{ fontFamily: fonts.body, fontSize: 15, lineHeight: 23, color: '#7E9A9B' }}>
-            {"Your counter's already running. Keep it going with everything Clearway unlocks."}
+            {firstReason
+              ? `You're doing this for “${firstReason}.” Keep everything you just saw by your side.`
+              : "Your counter's already running. Keep everything you just saw by your side."}
           </Text>
         </View>
 
-        <View style={{ gap: 10 }}>
-          <PlanRow selected={plan === 'annual'} onPress={() => setPlan('annual')} title="Annual" price="$29.99 / year · ≈ $2.50/mo" badge="BEST VALUE" />
-          <PlanRow selected={plan === 'monthly'} onPress={() => setPlan('monthly')} title="Monthly" price="$4.99 / month" />
-          <PlanRow selected={plan === 'lifetime'} onPress={() => setPlan('lifetime')} title="Lifetime" price="$49.99 once · clear forever" />
-        </View>
+        <PlanPicker value={plan} onChange={setPlan} />
       </View>
 
       <View style={{ gap: 14 }}>
@@ -135,6 +138,8 @@ export default function Paywall() {
         <Cta label="Start 7-day free trial" onPress={finish} />
         <Text style={{ fontFamily: fonts.body, fontSize: 12, color: '#7E9A9B', textAlign: 'center' }}>No charge today · Cancel anytime</Text>
       </View>
+
+      {offering ? <TrialOfferSheet onAccept={acceptTrial} onDecline={() => { setOffering(false); finish(); }} /> : null}
     </View>
   );
 }

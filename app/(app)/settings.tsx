@@ -14,6 +14,7 @@ import { Group, Row, SectionLabel, withAlpha } from '@/components/settings/Setti
 import { Toggle } from '@/components/settings/Toggle';
 import { AppearanceRow } from '@/components/settings/AppearanceRow';
 import { PRIVACY_URL, TERMS_URL, rateApp, restorePurchases, sendFeedback, shareApp } from '@/components/settings/actions';
+import { isWidgetPinSupported, requestPinClearwayWidget } from '@/modules/widget-pin';
 import { QuitDateSheet } from '@/components/settings/sheets/QuitDateSheet';
 import { CURRENCY_SYMBOL, FrequencySheet, WeeklyCostSheet } from '@/components/settings/sheets/EditValueSheets';
 import { ReminderTimeSheet, formatTime12 } from '@/components/settings/sheets/ReminderTimeSheet';
@@ -99,6 +100,9 @@ export default function Settings() {
             {notifications.enabled ? (
               <Row label="Daily reminder" value={formatTime12(notifications.dailyTime)} onPress={() => setSheet('time')} />
             ) : null}
+            {isWidgetPinSupported() ? (
+              <Row label="Add widget to home screen" onPress={() => requestPinClearwayWidget()} />
+            ) : null}
           </Section>
 
           <Section label="Premium">
@@ -126,6 +130,7 @@ export default function Settings() {
               right={<Text style={{ fontFamily: fonts.mono, fontSize: 13, color: colors.muted }}>{version}</Text>}
             />
             <Row label="Delete my data" danger onPress={() => setSheet('delete')} />
+            {__DEV__ ? <Row label="🔧 Debug tools" onPress={() => router.push('/debug')} /> : null}
           </Section>
         </ScrollView>
       </View>

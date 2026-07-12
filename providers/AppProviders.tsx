@@ -14,6 +14,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { PressablesConfig } from 'pressto';
 import { haptics, initHaptics } from '@/lib/haptics';
 import { initPurchases } from '@/lib/purchases';
+import { PremiumSync } from '@/components/premium/PremiumSync';
 import { ThemeProvider } from '@/theme/ThemeProvider';
 
 export function AppProviders({ children }: { children: ReactNode }) {
@@ -32,7 +33,10 @@ export function AppProviders({ children }: { children: ReactNode }) {
             config={{ minScale: 0.95, activeOpacity: 0.9, baseScale: 1 }}
             globalHandlers={{ onPress: () => haptics.tap() }}
           >
-            <ThemeProvider>{children}</ThemeProvider>
+            <ThemeProvider>
+              <PremiumSync />
+              {children}
+            </ThemeProvider>
           </PressablesConfig>
         </SafeAreaProvider>
       </KeyboardProvider>

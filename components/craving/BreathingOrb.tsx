@@ -7,7 +7,7 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
-import { BREATH_PHASES, type BreathPhase } from '@/lib/breathing';
+import { type BreathPhase } from '@/lib/breathing';
 
 const FIELD = 208;
 const BODY = 150;
@@ -16,26 +16,23 @@ const C = BODY;
 const R = BODY / 2;
 const MIN_SCALE = 0.6;
 
-const [INHALE, , EXHALE] = BREATH_PHASES;
-
 /**
  * The signature craving orb — the same glowing 3D sphere as the WOW orb. It
  * follows the breath phases from the shared clock: it grows to full over the
- * inhale, settles/holds at full, then contracts over the exhale. Driven off the
- * `phase` prop so it stays locked to the guiding label (no independent drift).
+ * inhale, holds wherever the last phase left it, then contracts over the
+ * exhale. Driven off the `phase`/`durationMs` props so it stays locked to the
+ * guiding label (no independent drift) across every pattern.
  */
-export function BreathingOrb({ phase }: { phase: BreathPhase }) {
+export function BreathingOrb({ phase, durationMs }: { phase: BreathPhase; durationMs: number }) {
   const scale = useSharedValue(MIN_SCALE);
 
   useEffect(() => {
     if (phase === 'inhale') {
-      scale.value = withTiming(1, { duration: INHALE.durationMs, easing: Easing.inOut(Easing.ease) });
+      scale.value = withTiming(1, { duration: durationMs, easing: Easing.inOut(Easing.ease) });
     } else if (phase === 'exhale') {
-      scale.value = withTiming(MIN_SCALE, { duration: EXHALE.durationMs, easing: Easing.inOut(Easing.ease) });
-    } else {
-      scale.value = withTiming(1, { duration: 350, easing: Easing.out(Easing.ease) });
+      scale.value = withTiming(MIN_SCALE, { duration: durationMs, easing: Easing.inOut(Easing.ease) });
     }
-  }, [phase, scale]);
+  }, [phase, durationMs, scale]);
 
   const sphere = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
 

@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { PressableScale } from 'pressto';
 import { useQuitStore, type Reason } from '@/store/useQuitStore';
+import { usePremium } from '@/hooks/usePremium';
 import { msClean } from '@/lib/time';
 import { fonts } from '@/constants/theme';
 import { Atmosphere } from '@/components/home/Atmosphere';
@@ -14,7 +15,7 @@ import { StaggerIn } from '@/components/ui/StaggerIn';
 import { ReasonCard } from '@/components/reasons/ReasonCard';
 import { ReasonModal, type ReasonValues } from '@/components/reasons/ReasonModal';
 import { seedReason } from '@/components/reasons/seeds';
-import { BackIcon } from '@/components/progress/icons';
+import { BackIcon, LockIcon } from '@/components/progress/icons';
 
 const BTN = {
   width: 44,
@@ -38,6 +39,8 @@ export default function Reasons() {
   const removeReason = useQuitStore((s) => s.removeReason);
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState<Reason | null>(null);
+  const { isPremium } = usePremium();
+  const canAdd = isPremium || reasons.length < 3;
 
   const submit = (values: ReasonValues) => {
     if (editing) updateReason(editing.id, values);
@@ -94,7 +97,7 @@ export default function Reasons() {
 
           <StaggerIn index={reasons.length + 1} base={30} step={30} duration={240}>
             <PressableScale
-              onPress={() => setAdding(true)}
+              onPress={() => (canAdd ? setAdding(true) : router.push('/paywall'))}
               style={{
                 borderWidth: 1,
                 borderStyle: 'dashed',
@@ -107,8 +110,14 @@ export default function Reasons() {
                 gap: 9,
               }}
             >
-              <Text style={{ fontSize: 18, color: '#9FB4B3', lineHeight: 20 }}>+</Text>
-              <Text style={{ fontFamily: fonts.bodySemibold, fontSize: 15, color: '#9FB4B3' }}>Add a reason</Text>
+              {canAdd ? (
+                <Text style={{ fontSize: 18, color: '#9FB4B3', lineHeight: 20 }}>+</Text>
+              ) : (
+                <LockIcon size={14} color="#9FB4B3" />
+              )}
+              <Text style={{ fontFamily: fonts.bodySemibold, fontSize: 15, color: '#9FB4B3' }}>
+                {canAdd ? 'Add a reason' : 'Unlimited reasons — Premium'}
+              </Text>
             </PressableScale>
           </StaggerIn>
 

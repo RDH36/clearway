@@ -1,7 +1,7 @@
 {
   "name": "clearway",
   "version": "1.0.0",
-  "main": "expo-router/entry",
+  "main": "index.ts",
   "scripts": {
     "start": "expo start --dev-client",
     "android": "expo run:android",
@@ -23,6 +23,7 @@
     "expo-constants": "~56.0.18",
     "expo-font": "~56.0.7",
     "expo-linking": "~56.0.14",
+    "expo-notifications": "~56.0.19",
     "expo-router": "~56.2.11",
     "expo-splash-screen": "~56.0.10",
     "expo-status-bar": "~56.0.4",
@@ -33,6 +34,7 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-native": "0.85.3",
+    "react-native-android-widget": "^0.20.3",
     "react-native-ease": "^0.7.3",
     "react-native-gesture-handler": "~2.31.1",
     "react-native-keyboard-controller": "1.21.6",

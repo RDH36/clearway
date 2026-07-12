@@ -2,18 +2,19 @@
  * Health recovery timeline (spec §3 / design brief B3). Time-based markers that
  * unlock by elapsed clean time. Calm, factual, encouraging — never graphic.
  */
-import { DAY_MS, HOUR_MS, MINUTE_MS, MONTH_MS, WEEK_MS } from '@/constants/time';
+import { DAY_MS, HOUR_MS, MINUTE_MS, MONTH_MS, WEEK_MS, YEAR_MS } from '@/constants/time';
 
 export type HealthMarker = {
   id: string;
   atMs: number;
   title: string;
   body: string;
+  premiumLocked: boolean;
 };
 
 export type UpcomingMarker = HealthMarker & { inMs: number };
 
-export const HEALTH_MARKERS: HealthMarker[] = [
+const MARKERS: Omit<HealthMarker, 'premiumLocked'>[] = [
   {
     id: '20m',
     atMs: 20 * MINUTE_MS,
@@ -62,7 +63,25 @@ export const HEALTH_MARKERS: HealthMarker[] = [
     title: 'Noticeably more capacity',
     body: 'Lung capacity is measurably better — stairs and walks feel easier.',
   },
+  {
+    id: '6mo',
+    atMs: 6 * MONTH_MS,
+    title: 'Circulation strong',
+    body: 'Blood flow and everyday stamina noticeably improve.',
+  },
+  {
+    id: '1y',
+    atMs: YEAR_MS,
+    title: 'Heart risk halved',
+    body: 'Your heart-disease risk drops to half that of a vaper.',
+  },
 ];
+
+/** Anything strictly beyond 1 month is gated (1 month itself stays free). */
+export const HEALTH_MARKERS: HealthMarker[] = MARKERS.map((m) => ({
+  ...m,
+  premiumLocked: m.atMs > MONTH_MS,
+}));
 
 /** Markers whose time has been reached (revealed + lit). */
 export function unlocked(msClean: number): HealthMarker[] {

@@ -19,6 +19,7 @@
       }
     },
     "plugins": [
+      "./plugins/withTransparentNavBar",
       "expo-router",
       [
         "expo-splash-screen",
@@ -29,7 +30,41 @@
           "backgroundColor": "#0E1B1F"
         }
       ],
-      "expo-audio"
+      "expo-audio",
+      "expo-notifications",
+      [
+        "react-native-android-widget",
+        {
+          "fonts": [
+            "./assets/fonts/BricolageGrotesque_700Bold.ttf",
+            "./assets/fonts/HankenGrotesk_400Regular.ttf",
+            "./assets/fonts/HankenGrotesk_600SemiBold.ttf",
+            "./assets/fonts/GeistMono_500Medium.ttf"
+          ],
+          "widgets": [
+            {
+              "name": "Clearway",
+              "label": "Clearway",
+              "description": "Days clear, money saved, next milestone",
+              "minWidth": "250dp",
+              "minHeight": "110dp",
+              "targetCellWidth": 4,
+              "targetCellHeight": 2,
+              "updatePeriodMillis": 86400000
+            },
+            {
+              "name": "ClearwaySmall",
+              "label": "Clearway · Days",
+              "description": "Your days clear at a glance",
+              "minWidth": "110dp",
+              "minHeight": "110dp",
+              "targetCellWidth": 2,
+              "targetCellHeight": 2,
+              "updatePeriodMillis": 86400000
+            }
+          ]
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

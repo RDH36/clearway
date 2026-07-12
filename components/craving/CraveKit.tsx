@@ -1,13 +1,8 @@
 import { StyleSheet, Text, View } from 'react-native';
 import Svg, { Path, Rect } from 'react-native-svg';
+import { PressableScale } from 'pressto';
 import { fonts } from '@/constants/theme';
-
-// Premium craving kit — frosted-lock, visual only (no RevenueCat yet).
-const KIT = [
-  { title: 'Guided breathing library', sub: '12 sessions for different cravings' },
-  { title: 'Urge-surfing timer', sub: 'Ride the wave — it passes in minutes' },
-  { title: 'Craving journal', sub: 'Spot your triggers over time' },
-];
+import { BREATH_PATTERNS, type BreathPattern, type PatternId } from '@/lib/breathing';
 
 function Lock() {
   return (
@@ -18,35 +13,72 @@ function Lock() {
   );
 }
 
+function Wave({ on }: { on: boolean }) {
+  return (
+    <Svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke={on ? '#5BE0C6' : '#AFC4C2'} strokeWidth={1.8} strokeLinecap="round">
+      <Path d="M2 12c2.5-5 5-5 7.5 0s5 5 7.5 0 3-3.5 5-2" />
+    </Svg>
+  );
+}
+
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 
 /**
- * `haze` (0 clear air → 1 full smoke) darkens the cards as the fog thickens: a
- * light frosted panel reads on cleared air, but over heavy grey smoke it turns
- * into a dark, more opaque panel so the locked rows keep their contrast.
+ * The premium craving kit — the extra breathing patterns. Free users see the
+ * frosted locked rows (tap → paywall); premium users pick their pattern here.
+ * `haze` (0 clear air → 1 full smoke) darkens the cards as the fog thickens so
+ * the rows keep their contrast over heavy grey smoke.
  */
-export function CraveKit({ haze = 0 }: { haze?: number }) {
+export function CraveKit({
+  haze = 0,
+  isPremium,
+  activeId,
+  onSelect,
+  onLockedPress,
+}: {
+  haze?: number;
+  isPremium: boolean;
+  activeId: PatternId;
+  onSelect: (pattern: BreathPattern) => void;
+  onLockedPress: () => void;
+}) {
   const t = Math.max(0, Math.min(1, haze));
   const rowSkin = {
     backgroundColor: `rgba(${Math.round(lerp(150, 18, t))},${Math.round(lerp(170, 32, t))},${Math.round(lerp(172, 38, t))},${lerp(0.13, 0.53, t).toFixed(3)})`,
     borderColor: `rgba(150,170,172,${lerp(0.22, 0.36, t).toFixed(3)})`,
   };
+  const patterns = BREATH_PATTERNS.filter((p) => p.premium);
 
   return (
     <View style={{ flex: 1, gap: 10 }}>
       <Text style={styles.eyebrow}>More for cravings</Text>
-      {KIT.map((k) => (
-        <View key={k.title} style={[styles.row, rowSkin]}>
-          <View style={styles.iconWrap}>
-            <Lock />
-          </View>
-          <View style={{ flex: 1, gap: 1 }}>
-            <Text style={styles.title}>{k.title}</Text>
-            <Text style={styles.sub}>{k.sub}</Text>
-          </View>
-          <Text style={styles.badge}>Premium</Text>
-        </View>
-      ))}
+      {patterns.map((p) => {
+        const active = isPremium && activeId === p.id;
+        return (
+          <PressableScale
+            key={p.id}
+            onPress={() => (isPremium ? onSelect(p) : onLockedPress())}
+            style={[
+              styles.row,
+              rowSkin,
+              active ? { borderColor: 'rgba(91,224,198,0.55)', backgroundColor: 'rgba(91,224,198,0.10)' } : null,
+            ]}
+          >
+            <View style={[styles.iconWrap, active ? { backgroundColor: 'rgba(91,224,198,0.16)' } : null]}>
+              {isPremium ? <Wave on={active} /> : <Lock />}
+            </View>
+            <View style={{ flex: 1, gap: 1 }}>
+              <Text style={[styles.title, active ? { color: '#EAF4F2' } : null]}>{p.name}</Text>
+              <Text style={styles.sub}>{p.sub}</Text>
+            </View>
+            {isPremium ? (
+              active ? <Text style={styles.activeBadge}>On</Text> : null
+            ) : (
+              <Text style={styles.badge}>Premium</Text>
+            )}
+          </PressableScale>
+        );
+      })}
     </View>
   );
 }
@@ -87,6 +119,18 @@ const styles = StyleSheet.create({
     color: '#AFC4C2',
     textTransform: 'uppercase',
     backgroundColor: 'rgba(150,170,172,0.16)',
+    borderRadius: 20,
+    paddingVertical: 3,
+    paddingHorizontal: 8,
+    overflow: 'hidden',
+  },
+  activeBadge: {
+    fontFamily: fonts.mono,
+    fontSize: 9,
+    letterSpacing: 1,
+    color: '#5BE0C6',
+    textTransform: 'uppercase',
+    backgroundColor: 'rgba(91,224,198,0.14)',
     borderRadius: 20,
     paddingVertical: 3,
     paddingHorizontal: 8,

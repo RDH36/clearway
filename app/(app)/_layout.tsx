@@ -10,7 +10,7 @@ export default function AppLayout() {
   if (!onboardingComplete) return <Redirect href="/onboarding/welcome" />;
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
+    <Stack screenOptions={{ headerShown: false, navigationBarTranslucent: true, navigationBarColor: 'transparent' }}>
       <Stack.Screen name="index" />
       <Stack.Screen
         name="progress"

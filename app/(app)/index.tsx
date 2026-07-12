@@ -11,6 +11,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PressableScale } from 'pressto';
 import { useNow } from '@/hooks/useNow';
 import { useScreenFocused } from '@/hooks/useScreenFocused';
+import { usePremium } from '@/hooks/usePremium';
 import { useQuitStore } from '@/store/useQuitStore';
 import { msClean } from '@/lib/time';
 import { moneySaved } from '@/lib/money';
@@ -23,6 +24,8 @@ import { seedReason } from '@/components/reasons/seeds';
 import { HomeHeader } from '@/components/home/HomeHeader';
 import { HeroCounter } from '@/components/home/HeroCounter';
 import { StatsRow } from '@/components/home/StatsRow';
+import { AffirmationCard } from '@/components/premium/AffirmationCard';
+import { TrialBanner } from '@/components/premium/TrialBanner';
 import { OrbIcon, SlipIcon } from '@/components/home/icons';
 import { DAY_MS } from '@/constants/time';
 
@@ -72,7 +75,16 @@ export default function Home() {
   const weekly = useQuitStore((s) => s.weeklySpend);
   const reasons = useQuitStore((s) => s.reasons);
   const motivation = useQuitStore((s) => s.primaryMotivation);
+  const trialEndSeen = useQuitStore((s) => s.trialEndSeen);
+  const setTrialEndSeen = useQuitStore((s) => s.setTrialEndSeen);
+  const { isPremium, trialExpired } = usePremium();
   const ms = msClean(quit, now);
+
+  useEffect(() => {
+    if (!focused || isPremium || !trialExpired || trialEndSeen) return;
+    setTrialEndSeen(true);
+    router.push('/paywall');
+  }, [focused, isPremium, trialExpired, trialEndSeen, setTrialEndSeen, router]);
 
   const pool = reasons.length > 0 ? reasons : [seedReason(motivation, weekly)];
   const reason = pool[rotation % pool.length];
@@ -103,10 +115,12 @@ export default function Home() {
           onSettings={() => go('/settings')}
           onProgress={() => go('/progress')}
         />
+        <TrialBanner onPress={() => go('/paywall')} />
 
         <HeroCounter quit={quit} statusCopy={statusFor(ms)} />
 
         <View style={{ gap: 12 }}>
+          <AffirmationCard ms={ms} />
           <WhyCard reason={reason} onPress={() => go('/reasons')} />
 
           <StatsRow

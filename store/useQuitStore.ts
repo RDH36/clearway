@@ -48,6 +48,12 @@ export type QuitState = {
   notifications: NotificationPrefs;
   breathSound: boolean; // craving 4-7-8 phase-change chime on/off
 
+  // premium (spec premium §3)
+  trialStartedAt: number | null; // local 3-day trial start; null = never started
+  trialUsed: boolean; // trial can only be taken once
+  trialEndSeen: boolean; // paywall re-shown once at trial expiry
+  premiumCached: boolean; // last usePremium() value, for headless widget reads
+
   // bookkeeping
   hasRequestedReview: boolean; // in-app review fired once
 };
@@ -65,6 +71,10 @@ export type QuitActions = {
   updateReason: (id: string, patch: Partial<Omit<Reason, 'id'>>) => void;
   removeReason: (id: string) => void;
   setNotifications: (patch: Partial<NotificationPrefs>) => void;
+  /** Accept the local 3-day trial (paywall dismiss offer). One-shot. */
+  startTrial: () => void;
+  setTrialEndSeen: (value: boolean) => void;
+  setPremiumCached: (value: boolean) => void;
   markReviewRequested: () => void;
   /** Patch onboarding-quiz answers as they're tapped (spec §4). */
   setQuizAnswers: (patch: Partial<QuitState>) => void;
@@ -85,6 +95,10 @@ const DEFAULT_STATE: QuitState = {
   onboardingComplete: false,
   themePref: 'system',
   breathSound: true,
+  trialStartedAt: null,
+  trialUsed: false,
+  trialEndSeen: false,
+  premiumCached: false,
   notifications: {
     enabled: false,
     dailyTime: '09:00',
@@ -133,16 +147,30 @@ export const useQuitStore = create<Store>()(
       removeReason: (id) => set((s) => ({ reasons: s.reasons.filter((r) => r.id !== id) })),
       setNotifications: (patch) =>
         set((s) => ({ notifications: { ...s.notifications, ...patch } })),
+      startTrial: () => {
+        if (get().trialUsed) return;
+        set({ trialStartedAt: Date.now(), trialUsed: true, trialEndSeen: false });
+      },
+      setTrialEndSeen: (trialEndSeen) => set({ trialEndSeen }),
+      setPremiumCached: (premiumCached) => set({ premiumCached }),
       markReviewRequested: () => set({ hasRequestedReview: true }),
       setQuizAnswers: (patch) => set(patch),
       resetAll: () => set({ ...DEFAULT_STATE }),
     }),
     {
       name: 'clearway-quit-store',
-      version: 2,
+      version: 3,
       migrate: (persisted, version) => {
-        const state = persisted as Partial<QuitState>;
-        if (version < 2) return { ...state, reasons: [] };
+        let state = persisted as Partial<QuitState>;
+        if (version < 2) state = { ...state, reasons: [] };
+        if (version < 3)
+          state = {
+            ...state,
+            trialStartedAt: null,
+            trialUsed: false,
+            trialEndSeen: false,
+            premiumCached: false,
+          };
         return state;
       },
       storage: createJSONStorage(() => AsyncStorage),
