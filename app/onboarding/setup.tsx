@@ -11,6 +11,7 @@ import { haptics } from '@/lib/haptics';
 import { requestPinClearwayWidget } from '@/modules/widget-pin';
 import { Shell } from '@/components/onboarding/Shell';
 import { Cta } from '@/components/onboarding/Cta';
+import { Highlight } from '@/components/ui/Highlight';
 import { fonts } from '@/constants/theme';
 
 type Beat = 'affirmation' | 'widget' | 'notif';
@@ -91,9 +92,10 @@ export default function OnboardingSetup() {
                 {morning.text}
               </Text>
             </View>
-            <Text style={{ fontFamily: fonts.body, fontSize: 14.5, lineHeight: 21, color: '#9FB4B3' }}>
-              Built from your own words — a fresh one every day, never the same lecture twice.
-            </Text>
+            <Highlight
+              text="**From your words.** A fresh one **every morning.**"
+              style={{ fontFamily: fonts.body, fontSize: 14.5, lineHeight: 21, color: '#9FB4B3' }}
+            />
           </Animated.View>
         ) : null}
 
@@ -111,9 +113,10 @@ export default function OnboardingSetup() {
                 Tomorrow morning, on your home screen.
               </Text>
             </View>
-            <Text style={{ fontFamily: fonts.body, fontSize: 14.5, lineHeight: 21, color: '#9FB4B3' }}>
-              {"Add it now and it starts counting with you — every glance is a reminder of how far you've come."}
-            </Text>
+            <Highlight
+              text="**Every glance** at your phone — a reminder of **how far you've come.**"
+              style={{ fontFamily: fonts.body, fontSize: 14.5, lineHeight: 21, color: '#9FB4B3' }}
+            />
           </Animated.View>
         ) : null}
 
@@ -133,9 +136,10 @@ export default function OnboardingSetup() {
                 </Text>
               </View>
             </View>
-            <Text style={{ fontFamily: fonts.body, fontSize: 14.5, lineHeight: 21, color: '#9FB4B3' }}>
-              Once a day, a word from us — on your reason, never shame. Say yes and this one arrives right now.
-            </Text>
+            <Highlight
+              text="**Once a day.** Never shame. Say yes — this one arrives **right now.**"
+              style={{ fontFamily: fonts.body, fontSize: 14.5, lineHeight: 21, color: '#9FB4B3' }}
+            />
           </Animated.View>
         ) : null}
 

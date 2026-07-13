@@ -29,7 +29,7 @@ export default function Quiz() {
       if (index >= QUESTIONS.length - 1) router.push('/onboarding/empathy');
       else setIndex((i) => i + 1);
       setLocked(false);
-    }, 480);
+    }, 1250);
   };
 
   const goBack = () => {

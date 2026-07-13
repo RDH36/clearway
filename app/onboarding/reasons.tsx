@@ -11,6 +11,7 @@ import { formatMoney } from '@/lib/format';
 import { haptics } from '@/lib/haptics';
 import { Shell } from '@/components/onboarding/Shell';
 import { Cta } from '@/components/onboarding/Cta';
+import { Highlight } from '@/components/ui/Highlight';
 import { fonts } from '@/constants/theme';
 
 const REASONS_PROGRESS = 0.97;
@@ -30,23 +31,28 @@ export default function OnboardingReasons() {
   const weekly = useQuitStore((s) => s.weeklySpend);
   const addReason = useQuitStore((s) => s.addReason);
   const [text, setText] = useState('');
+  const [weaving, setWeaving] = useState(false);
   const [affirmation, setAffirmation] = useState<string | null>(null);
 
   const reveal = () => {
     const title = text.trim();
-    if (!title) return;
+    if (!title || weaving) return;
     Keyboard.dismiss();
+    setWeaving(true);
     addReason({ id: `r-${Date.now()}`, glyph: GLYPH[motivation], title, note: '' });
-    const a = pickAffirmation({
-      motivation,
-      moment: 'early',
-      seed: 1,
-      reason: title,
-      days: 1,
-      money: formatMoney(projectedYear(weekly)),
-    });
-    setAffirmation(a.text);
-    haptics.milestone();
+    setTimeout(() => {
+      const a = pickAffirmation({
+        motivation,
+        moment: 'early',
+        seed: 1,
+        reason: title,
+        days: 1,
+        money: formatMoney(projectedYear(weekly)),
+      });
+      setAffirmation(a.text);
+      setWeaving(false);
+      haptics.milestone();
+    }, 1100);
   };
 
   const next = () => router.replace('/onboarding/wow');
@@ -67,9 +73,10 @@ export default function OnboardingReasons() {
           <Text style={{ fontFamily: fonts.displaySemibold, fontSize: 27, lineHeight: 32, color: '#EAF4F2', letterSpacing: -0.4 }}>
             {MOTIVE_ECHO[motivation]}
           </Text>
-          <Text style={{ fontFamily: fonts.body, fontSize: 15, lineHeight: 23, color: '#9FB4B3' }}>
-            Now make it yours. Finish this sentence in your own words — no one else will say it like you do.
-          </Text>
+          <Highlight
+            text="**Your words** carry more weight than ours ever will."
+            style={{ fontFamily: fonts.body, fontSize: 15, lineHeight: 23, color: '#9FB4B3' }}
+          />
         </View>
 
         <View style={{ gap: 8 }}>
@@ -101,6 +108,15 @@ export default function OnboardingReasons() {
           />
         </View>
 
+        {weaving ? (
+          <Animated.Text
+            entering={FadeIn.duration(250)}
+            style={{ fontFamily: fonts.bodyMedium, fontSize: 13.5, color: '#5BE0C6', textAlign: 'center', paddingTop: 4 }}
+          >
+            Weaving it into your plan…
+          </Animated.Text>
+        ) : null}
+
         {affirmation ? (
           <Animated.View entering={FadeInDown.duration(500)} style={{ gap: 10 }}>
             <View
@@ -124,9 +140,10 @@ export default function OnboardingReasons() {
                 </Text>
               </View>
             </View>
-            <Text style={{ fontFamily: fonts.body, fontSize: 13, lineHeight: 19, color: '#9FB4B3', textAlign: 'center', paddingHorizontal: 10 }}>
-              {"We'll bring this back to you when it matters most. You're not doing this alone."}
-            </Text>
+            <Highlight
+              text="**We bring it back** when it matters. **You're not alone.**"
+              style={{ fontFamily: fonts.body, fontSize: 13, lineHeight: 19, color: '#9FB4B3', textAlign: 'center', paddingHorizontal: 10 }}
+            />
           </Animated.View>
         ) : null}
 
@@ -134,12 +151,14 @@ export default function OnboardingReasons() {
 
         <Animated.View entering={FadeIn.delay(300)} style={{ gap: 12 }}>
           {affirmation === null ? (
-            <>
-              <Cta label="That's my why →" onPress={reveal} />
-              <PressableScale onPress={next} style={{ alignSelf: 'center', paddingVertical: 6, paddingHorizontal: 12 }}>
-                <Text style={{ fontFamily: fonts.bodyMedium, fontSize: 14, color: '#7E9A9B' }}>Skip for now</Text>
-              </PressableScale>
-            </>
+            weaving ? null : (
+              <>
+                <Cta label="That's my why →" onPress={reveal} />
+                <PressableScale onPress={next} style={{ alignSelf: 'center', paddingVertical: 6, paddingHorizontal: 12 }}>
+                  <Text style={{ fontFamily: fonts.bodyMedium, fontSize: 14, color: '#7E9A9B' }}>Skip for now</Text>
+                </PressableScale>
+              </>
+            )
           ) : (
             <Cta label="Keep it close →" onPress={next} />
           )}

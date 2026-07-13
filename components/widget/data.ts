@@ -50,8 +50,8 @@ export async function buildWidgetData(): Promise<WidgetData> {
     const days = Math.floor(ms / DAY_MS);
     const supportText = pickAffirmation({
       motivation,
-      moment: 'early',
-      seed: Math.floor(Date.now() / (3 * HOUR_MS)),
+      moment: 'general',
+      seed: Math.floor(Date.now() / HOUR_MS),
       reason,
       days: Math.max(1, days),
       money: formatMoney(moneySaved(state.weeklySpend ?? 0, Math.max(ms, DAY_MS))),

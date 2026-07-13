@@ -3,6 +3,7 @@ import { App } from 'expo-router/build/qualified-entry';
 import { renderRootComponent } from 'expo-router/build/renderRootComponent';
 import { registerWidgetTaskHandler } from 'react-native-android-widget';
 import { widgetTaskHandler } from './components/widget/taskHandler';
+import './lib/supportBar';
 
 registerWidgetTaskHandler(widgetTaskHandler);
 renderRootComponent(App);

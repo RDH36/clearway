@@ -4,6 +4,7 @@ import Animated, { FadeIn } from 'react-native-reanimated';
 import { Shell } from '@/components/onboarding/Shell';
 import { Cta } from '@/components/onboarding/Cta';
 import { Orb } from '@/components/onboarding/Orb';
+import { Highlight } from '@/components/ui/Highlight';
 import { fonts } from '@/constants/theme';
 
 export default function Welcome() {
@@ -21,9 +22,10 @@ export default function Welcome() {
         >
           The air clears from here.
         </Text>
-        <Text style={{ fontFamily: fonts.body, fontSize: 15, lineHeight: 23, color: '#AFC4C2', textAlign: 'center', maxWidth: 260 }}>
-          Quitting vaping, one cleared breath at a time. No lectures. No shame.
-        </Text>
+        <Highlight
+          text={'Quit vaping **one breath** at a time.\n**No lectures. No shame.**'}
+          style={{ fontFamily: fonts.body, fontSize: 15, lineHeight: 23, color: '#AFC4C2', textAlign: 'center', maxWidth: 260 }}
+        />
       </Animated.View>
       <Cta label="GET STARTED" onPress={() => router.push('/onboarding/quiz')} />
     </Shell>

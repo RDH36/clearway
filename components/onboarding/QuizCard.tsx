@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { StyleSheet, Text, View, type DimensionValue } from 'react-native';
 import { PressableScale } from 'pressto';
 import Svg, { Defs, RadialGradient, Rect, Stop } from 'react-native-svg';
-import Animated, { Easing, interpolate, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import Animated, { Easing, FadeInDown, interpolate, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { fonts } from '@/constants/theme';
 import type { QuizOption, QuizQuestion } from './content';
 
@@ -143,6 +143,7 @@ export function QuizCard({
   selectedLabel: string | null;
   onSelect: (option: QuizOption) => void;
 }) {
+  const echo = question.options.find((o) => o.label === selectedLabel)?.echo ?? null;
   return (
     <View style={{ gap: 14 }}>
       <View style={{ gap: 7 }}>
@@ -161,6 +162,16 @@ export function QuizCard({
             onPress={() => onSelect(opt)}
           />
         ))}
+      </View>
+      <View style={{ height: 22 }}>
+        {echo ? (
+          <Animated.Text
+            entering={FadeInDown.duration(280)}
+            style={{ fontFamily: fonts.bodyMedium, fontSize: 13.5, color: '#5BE0C6', textAlign: 'center' }}
+          >
+            {echo}
+          </Animated.Text>
+        ) : null}
       </View>
     </View>
   );

@@ -12,6 +12,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Shell } from '@/components/onboarding/Shell';
 import { Cta } from '@/components/onboarding/Cta';
+import { Highlight } from '@/components/ui/Highlight';
 import { buildEmpathy, EMPATHY_PROGRESS } from '@/components/onboarding/content';
 import { useQuitStore } from '@/store/useQuitStore';
 import { haptics } from '@/lib/haptics';
@@ -37,8 +38,9 @@ export default function Empathy() {
   const router = useRouter();
   const vapingDuration = useQuitStore((s) => s.vapingDuration);
   const worstCravingTime = useQuitStore((s) => s.worstCravingTime);
+  const quitFeeling = useQuitStore((s) => s.quitFeeling);
   const [revealed, setRevealed] = useState(false);
-  const { mirror, proof } = buildEmpathy(vapingDuration, worstCravingTime);
+  const { mirror, feeling, proof } = buildEmpathy(vapingDuration, worstCravingTime, quitFeeling);
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -74,14 +76,22 @@ export default function Empathy() {
         >
           {mirror}
         </Animated.Text>
-        <Animated.Text
-          entering={FadeInDown.delay(850).duration(700)}
-          style={{ fontFamily: fonts.body, fontSize: 16, lineHeight: 25, color: '#9FB2B1' }}
-        >
-          {proof}
-        </Animated.Text>
+        {feeling ? (
+          <Animated.View entering={FadeInDown.delay(850).duration(700)}>
+            <Highlight
+              text={feeling}
+              style={{ fontFamily: fonts.bodyMedium, fontSize: 16, lineHeight: 25, color: '#C7D6D4' }}
+            />
+          </Animated.View>
+        ) : null}
+        <Animated.View entering={FadeInDown.delay(feeling ? 1450 : 850).duration(700)}>
+          <Highlight
+            text={proof}
+            style={{ fontFamily: fonts.body, fontSize: 16, lineHeight: 25, color: '#9FB2B1' }}
+          />
+        </Animated.View>
       </View>
-      <Animated.View entering={FadeInDown.delay(1500).duration(700)}>
+      <Animated.View entering={FadeInDown.delay(feeling ? 2100 : 1500).duration(700)}>
         <Cta label="See my plan →" onPress={() => router.replace('/onboarding/solution')} />
       </Animated.View>
     </Shell>

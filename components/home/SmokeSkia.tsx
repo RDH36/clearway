@@ -52,7 +52,8 @@ half4 main(float2 xy) {
 }
 `)!;
 
-// Home = light (3 octaves), onboarding backdrop = quality (4 octaves).
+// Home = light (3 octaves, 24fps, half-res); onboarding = quality (4 octaves)
+// but capped at 30fps and 70% res — full-screen 60fps SkSL melts 4GB devices.
 const smokeLo = smokeShader(3);
 const smokeHi = smokeShader(4);
 
@@ -80,10 +81,12 @@ half4 main(float2 xy) {
 }
 `)!;
 
+const HQ_SCALE = 0.7;
+
 export function SmokeSkia({ opacity, hq = false }: { opacity: number; hq?: boolean }) {
-  const clock = useSmokeClock(hq ? 60 : 24);
-  const w = hq ? width : width / 2;
-  const h = hq ? height : height / 2;
+  const clock = useSmokeClock(hq ? 30 : 24);
+  const w = hq ? width * HQ_SCALE : width / 2;
+  const h = hq ? height * HQ_SCALE : height / 2;
   const uniforms = useDerivedValue(
     () => ({ time: clock.value / 1000, resolution: [w, h], density: opacity }),
     [opacity, w, h]
@@ -92,7 +95,7 @@ export function SmokeSkia({ opacity, hq = false }: { opacity: number; hq?: boole
     <Canvas
       style={
         hq
-          ? StyleSheet.absoluteFill
+          ? { position: 'absolute', left: 0, top: 0, width: '70%', height: '70%', transform: [{ scale: 1 / HQ_SCALE }], transformOrigin: 'top left' }
           : { position: 'absolute', left: 0, top: 0, width: '50%', height: '50%', transform: [{ scale: 2 }], transformOrigin: 'top left' }
       }
       pointerEvents="none"
@@ -105,7 +108,7 @@ export function SmokeSkia({ opacity, hq = false }: { opacity: number; hq?: boole
 }
 
 export function SmokeSplit({ split }: { split: SharedValue<number> }) {
-  const clock = useSmokeClock(60);
+  const clock = useSmokeClock(30);
   const uniforms = useDerivedValue(() => ({
     time: clock.value / 1000,
     resolution: [width, height],

@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { usePremium } from '@/hooks/usePremium';
 import { useQuitStore } from '@/store/useQuitStore';
 import { initNotifications, syncEncouragementSchedule } from '@/lib/notifications';
+import { syncSupportBar } from '@/lib/supportBar';
 import { refreshWidget } from '@/components/widget/refresh';
 
 export function PremiumSync() {
@@ -21,6 +22,7 @@ export function PremiumSync() {
       { quitTimestamp, weeklySpend, primaryMotivation, reasons, notifications },
       isPremium
     );
+    syncSupportBar(isPremium);
     refreshWidget();
   }, [isPremium, quitTimestamp, weeklySpend, primaryMotivation, reasons, notifications]);
 

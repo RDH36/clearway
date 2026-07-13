@@ -26,6 +26,7 @@ export type NotificationPrefs = {
   dailyTime: string; // "HH:mm"
   milestonesOn: boolean;
   streakNudgeOn: boolean;
+  supportBar: boolean; // premium: persistent lock-screen affirmation
 };
 
 export type QuitState = {
@@ -40,6 +41,7 @@ export type QuitState = {
   vapingDuration: string; // Q2 answer
   usageFrequency: string; // Q3 answer
   worstCravingTime: string; // Q5 answer
+  quitFeeling: string; // Q6 answer — how quitting feels right now
   reasons: Reason[];
 
   // app
@@ -91,6 +93,7 @@ const DEFAULT_STATE: QuitState = {
   vapingDuration: '',
   usageFrequency: '',
   worstCravingTime: '',
+  quitFeeling: '',
   reasons: [],
   onboardingComplete: false,
   themePref: 'system',
@@ -104,6 +107,7 @@ const DEFAULT_STATE: QuitState = {
     dailyTime: '09:00',
     milestonesOn: true,
     streakNudgeOn: true,
+    supportBar: true,
   },
   hasRequestedReview: false,
 };
@@ -159,7 +163,7 @@ export const useQuitStore = create<Store>()(
     }),
     {
       name: 'clearway-quit-store',
-      version: 3,
+      version: 4,
       migrate: (persisted, version) => {
         let state = persisted as Partial<QuitState>;
         if (version < 2) state = { ...state, reasons: [] };
@@ -171,6 +175,8 @@ export const useQuitStore = create<Store>()(
             trialEndSeen: false,
             premiumCached: false,
           };
+        if (version < 4 && state.notifications)
+          state = { ...state, notifications: { ...state.notifications, supportBar: true } };
         return state;
       },
       storage: createJSONStorage(() => AsyncStorage),

@@ -4,7 +4,7 @@ import Svg, { Circle, Path } from 'react-native-svg';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { Shell } from '@/components/onboarding/Shell';
 import { Cta } from '@/components/onboarding/Cta';
-import { SOLUTION_PROGRESS } from '@/components/onboarding/content';
+import { SOLUTION_PROGRESS, worstPhrase } from '@/components/onboarding/content';
 import { useQuitStore } from '@/store/useQuitStore';
 import { projectedYear } from '@/lib/money';
 import { fonts } from '@/constants/theme';
@@ -65,6 +65,7 @@ function Tile({ icon, title, body, delay }: { icon: React.ReactNode; title: stri
 export default function Solution() {
   const router = useRouter();
   const weekly = useQuitStore((s) => s.weeklySpend);
+  const worst = useQuitStore((s) => s.worstCravingTime);
   const money = `~$${projectedYear(weekly).toLocaleString('en-US')} back this year`;
 
   return (
@@ -79,7 +80,7 @@ export default function Solution() {
         <View style={{ gap: 12 }}>
           <Tile icon={<ClockIcon />} title="Every second, counted" body="A live streak that never stops climbing." delay={50} />
           <Tile icon={<MoneyIcon />} title={money} body="Money that used to go up in vapor." delay={180} />
-          <Tile icon={<CraveIcon />} title="Somewhere to go when it hits" body="A 90-second breathing tool for cravings." delay={310} />
+          <Tile icon={<CraveIcon />} title="Somewhere to go when it hits" body={`A 90-second tool — built for ${worstPhrase(worst)}.`} delay={310} />
         </View>
         <Animated.Text
           entering={FadeIn.delay(500).duration(600)}

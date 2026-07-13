@@ -9,6 +9,7 @@ import { useNow } from '@/hooks/useNow';
 import { msClean } from '@/lib/time';
 import { haptics } from '@/lib/haptics';
 import { Cta } from '@/components/onboarding/Cta';
+import { Highlight } from '@/components/ui/Highlight';
 import { PlanPicker, type Plan } from '@/components/paywall/PlanPicker';
 import { TransitionLoader } from '@/components/splash/TransitionLoader';
 import { fonts } from '@/constants/theme';
@@ -117,11 +118,23 @@ export default function Paywall() {
           <Text style={{ fontFamily: fonts.displaySemibold, fontSize: 27, lineHeight: 31, color: '#EAF4F2', letterSpacing: -0.4 }}>
             {"Don't stop what you just started."}
           </Text>
-          <Text style={{ fontFamily: fonts.body, fontSize: 15, lineHeight: 23, color: '#7E9A9B' }}>
-            {firstReason
-              ? `You're doing this for “${firstReason}.” Keep everything you just saw by your side.`
-              : "Your counter's already running. Keep everything you just saw by your side."}
-          </Text>
+          <Highlight
+            text={
+              firstReason
+                ? `Keep everything you just saw — for **“${firstReason}.”**`
+                : "Keep everything you just saw **by your side.**"
+            }
+            style={{ fontFamily: fonts.body, fontSize: 15, lineHeight: 23, color: '#7E9A9B' }}
+          />
+        </View>
+
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', rowGap: 7 }}>
+          {['Counter running', 'Your why saved', 'Widget in place', 'Daily support on'].map((item) => (
+            <View key={item} style={{ width: '50%', flexDirection: 'row', alignItems: 'center', gap: 7 }}>
+              <Text style={{ fontSize: 11, color: '#5BE0C6' }}>✓</Text>
+              <Text style={{ fontFamily: fonts.bodyMedium, fontSize: 12.5, color: '#C7D6D4' }}>{item}</Text>
+            </View>
+          ))}
         </View>
 
         <PlanPicker value={plan} onChange={setPlan} />

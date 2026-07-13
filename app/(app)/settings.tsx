@@ -15,6 +15,7 @@ import { Toggle } from '@/components/settings/Toggle';
 import { AppearanceRow } from '@/components/settings/AppearanceRow';
 import { PRIVACY_URL, TERMS_URL, rateApp, restorePurchases, sendFeedback, shareApp } from '@/components/settings/actions';
 import { isWidgetPinSupported, requestPinClearwayWidget } from '@/modules/widget-pin';
+import { ensureNotificationPermission } from '@/lib/notifications';
 import { QuitDateSheet } from '@/components/settings/sheets/QuitDateSheet';
 import { CURRENCY_SYMBOL, FrequencySheet, WeeklyCostSheet } from '@/components/settings/sheets/EditValueSheets';
 import { ReminderTimeSheet, formatTime12 } from '@/components/settings/sheets/ReminderTimeSheet';
@@ -100,6 +101,23 @@ export default function Settings() {
             {notifications.enabled ? (
               <Row label="Daily reminder" value={formatTime12(notifications.dailyTime)} onPress={() => setSheet('time')} />
             ) : null}
+            <Row
+              label="Lock-screen support"
+              value={isPremium ? undefined : 'Premium'}
+              right={
+                <Toggle
+                  value={isPremium && notifications.supportBar}
+                  onChange={async (supportBar) => {
+                    if (!isPremium) {
+                      router.push('/paywall');
+                      return;
+                    }
+                    if (supportBar) await ensureNotificationPermission();
+                    setNotifications({ supportBar });
+                  }}
+                />
+              }
+            />
             {isWidgetPinSupported() ? (
               <Row label="Add widget to home screen" onPress={() => requestPinClearwayWidget()} />
             ) : null}
