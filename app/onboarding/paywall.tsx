@@ -8,6 +8,7 @@ import { useQuitStore } from '@/store/useQuitStore';
 import { useNow } from '@/hooks/useNow';
 import { msClean } from '@/lib/time';
 import { haptics } from '@/lib/haptics';
+import { purchasePlan, purchasesConfigured } from '@/lib/purchases';
 import { Cta } from '@/components/onboarding/Cta';
 import { Highlight } from '@/components/ui/Highlight';
 import { PlanPicker, type Plan } from '@/components/paywall/PlanPicker';
@@ -74,6 +75,7 @@ export default function Paywall() {
   const [plan, setPlan] = useState<Plan>('annual');
   const [entering, setEntering] = useState(false);
   const [offering, setOffering] = useState(false);
+  const [buying, setBuying] = useState(false);
 
   const sec = Math.floor(msClean(quit, now) / 1000);
   const hms = `${pad(Math.floor(sec / 3600))} : ${pad(Math.floor((sec % 3600) / 60))} : ${pad(sec % 60)}`;
@@ -86,6 +88,20 @@ export default function Paywall() {
   const dismiss = () => {
     if (!trialUsed) setOffering(true);
     else finish();
+  };
+  const buy = async () => {
+    if (buying) return;
+    if (!purchasesConfigured()) {
+      finish();
+      return;
+    }
+    setBuying(true);
+    const { entitled } = await purchasePlan(plan);
+    setBuying(false);
+    if (entitled) {
+      haptics.purchaseSuccess();
+      finish();
+    }
   };
   const acceptTrial = () => {
     startTrial();
@@ -148,8 +164,8 @@ export default function Paywall() {
           </View>
           <Text style={{ fontFamily: fonts.body, fontSize: 13, color: '#7E9A9B' }}>Join 100,000+ people clearing the air</Text>
         </View>
-        <Cta label="Start 7-day free trial" onPress={finish} />
-        <Text style={{ fontFamily: fonts.body, fontSize: 12, color: '#7E9A9B', textAlign: 'center' }}>No charge today · Cancel anytime</Text>
+        <Cta label={buying ? 'Opening Google Play…' : 'Unlock Clearway Premium'} onPress={buy} />
+        <Text style={{ fontFamily: fonts.body, fontSize: 12, color: '#7E9A9B', textAlign: 'center' }}>Cancel anytime · Secured by Google Play</Text>
       </View>
 
       {offering ? <TrialOfferSheet onAccept={acceptTrial} onDecline={() => { setOffering(false); finish(); }} /> : null}

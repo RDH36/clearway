@@ -6,6 +6,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PressableScale } from 'pressto';
 import { Cta } from '@/components/onboarding/Cta';
 import { PlanPicker, type Plan } from '@/components/paywall/PlanPicker';
+import { haptics } from '@/lib/haptics';
+import { purchasePlan, purchasesConfigured } from '@/lib/purchases';
 import { fonts } from '@/constants/theme';
 
 const PERKS = [
@@ -20,6 +22,22 @@ export default function Paywall() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [plan, setPlan] = useState<Plan>('annual');
+  const [buying, setBuying] = useState(false);
+
+  const buy = async () => {
+    if (buying) return;
+    if (!purchasesConfigured()) {
+      router.back();
+      return;
+    }
+    setBuying(true);
+    const { entitled } = await purchasePlan(plan);
+    setBuying(false);
+    if (entitled) {
+      haptics.purchaseSuccess();
+      router.back();
+    }
+  };
 
   return (
     <View style={{ flex: 1, backgroundColor: '#0B181C' }}>
@@ -67,9 +85,9 @@ export default function Paywall() {
         <View style={{ flex: 1 }} />
 
         <View style={{ gap: 12 }}>
-          <Cta label="Continue" onPress={() => router.back()} />
+          <Cta label={buying ? 'Opening Google Play…' : 'Unlock Clearway Premium'} onPress={buy} />
           <Text style={{ fontFamily: fonts.body, fontSize: 12, color: '#7E9A9B', textAlign: 'center' }}>
-            Purchases arrive with the next update · Nothing charged today
+            Cancel anytime · Secured by Google Play
           </Text>
         </View>
       </ScrollView>

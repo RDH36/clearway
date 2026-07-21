@@ -1,8 +1,10 @@
 import { Text, View } from 'react-native';
 import { PressableScale } from 'pressto';
+import { usePremiumPrices } from '@/hooks/usePremiumPrices';
+import type { Plan } from '@/lib/purchases';
 import { fonts } from '@/constants/theme';
 
-export type Plan = 'annual' | 'monthly' | 'lifetime';
+export type { Plan };
 
 export const PLANS: { id: Plan; title: string; price: string; badge?: string }[] = [
   { id: 'annual', title: 'Annual', price: '$29.99 / year · ≈ $2.50/mo', badge: 'BEST VALUE' },
@@ -26,10 +28,12 @@ function Radio({ on }: { on: boolean }) {
 }
 
 export function PlanPicker({ value, onChange }: { value: Plan; onChange: (plan: Plan) => void }) {
+  const prices = usePremiumPrices();
   return (
     <View style={{ gap: 10 }}>
       {PLANS.map((p) => {
         const selected = value === p.id;
+        const price = prices[p.id] ?? p.price;
         return (
           <PressableScale
             key={p.id}
@@ -54,7 +58,7 @@ export function PlanPicker({ value, onChange }: { value: Plan; onChange: (plan: 
                   </Text>
                 ) : null}
               </View>
-              <Text style={{ fontFamily: fonts.body, fontSize: 13, color: '#7E9A9B' }}>{p.price}</Text>
+              <Text style={{ fontFamily: fonts.body, fontSize: 13, color: '#7E9A9B' }}>{price}</Text>
             </View>
             <Radio on={selected} />
           </PressableScale>
