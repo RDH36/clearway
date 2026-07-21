@@ -8,6 +8,20 @@ import { fonts } from '@/constants/theme';
 import { TimelineRow } from './TimelineRow';
 import { PremiumPill } from './PremiumPill';
 
+const BLUR_TITLE = {
+  color: 'transparent',
+  textShadowColor: 'rgba(234,244,242,0.55)',
+  textShadowOffset: { width: 0, height: 0 },
+  textShadowRadius: 12,
+} as const;
+
+const BLUR_BODY = {
+  color: 'transparent',
+  textShadowColor: 'rgba(159,180,179,0.45)',
+  textShadowOffset: { width: 0, height: 0 },
+  textShadowRadius: 9,
+} as const;
+
 export function RecoveryTab({
   ms,
   visible = true,
@@ -75,11 +89,13 @@ export function RecoveryTab({
                   </Text>
                 ) : null}
               </View>
-              <Text style={{ fontFamily: fonts.bodySemibold, fontSize: 16, color: past ? '#EAF4F2' : '#AFC4C2' }}>
+              <Text
+                style={[{ fontFamily: fonts.bodySemibold, fontSize: 16, color: past ? '#EAF4F2' : '#AFC4C2' }, locked ? BLUR_TITLE : null]}
+              >
                 {m.title}
               </Text>
-              <Text style={{ fontFamily: fonts.body, fontSize: 12.5, lineHeight: 18, color: '#9FB4B3' }}>
-                {locked ? 'Air not yet cleared' : m.body}
+              <Text style={[{ fontFamily: fonts.body, fontSize: 12.5, lineHeight: 18, color: '#9FB4B3' }, locked ? BLUR_BODY : null]}>
+                {m.body}
               </Text>
             </View>
           );

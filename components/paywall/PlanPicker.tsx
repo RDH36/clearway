@@ -28,12 +28,13 @@ function Radio({ on }: { on: boolean }) {
 }
 
 export function PlanPicker({ value, onChange }: { value: Plan; onChange: (plan: Plan) => void }) {
-  const prices = usePremiumPrices();
+  const { prices, trials } = usePremiumPrices();
   return (
     <View style={{ gap: 10 }}>
       {PLANS.map((p) => {
         const selected = value === p.id;
-        const price = prices[p.id] ?? p.price;
+        const base = prices[p.id] ?? p.price;
+        const price = trials[p.id] ? `7 days free, then ${base}` : base;
         return (
           <PressableScale
             key={p.id}

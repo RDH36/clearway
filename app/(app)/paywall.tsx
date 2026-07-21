@@ -8,6 +8,7 @@ import { Cta } from '@/components/onboarding/Cta';
 import { PlanPicker, type Plan } from '@/components/paywall/PlanPicker';
 import { haptics } from '@/lib/haptics';
 import { purchasePlan, purchasesConfigured } from '@/lib/purchases';
+import { usePremiumPrices } from '@/hooks/usePremiumPrices';
 import { fonts } from '@/constants/theme';
 
 const PERKS = [
@@ -23,6 +24,7 @@ export default function Paywall() {
   const insets = useSafeAreaInsets();
   const [plan, setPlan] = useState<Plan>('annual');
   const [buying, setBuying] = useState(false);
+  const { prices, trials } = usePremiumPrices();
 
   const buy = async () => {
     if (buying) return;
@@ -85,9 +87,12 @@ export default function Paywall() {
         <View style={{ flex: 1 }} />
 
         <View style={{ gap: 12 }}>
-          <Cta label={buying ? 'Opening Google Play…' : 'Unlock Clearway Premium'} onPress={buy} />
+          <Cta
+            label={buying ? 'Opening Google Play…' : trials[plan] ? 'Start 7 days free' : 'Unlock Clearway Premium'}
+            onPress={buy}
+          />
           <Text style={{ fontFamily: fonts.body, fontSize: 12, color: '#7E9A9B', textAlign: 'center' }}>
-            Cancel anytime · Secured by Google Play
+            {trials[plan] ? `Free for 7 days, then ${prices[plan]} · Cancel anytime` : 'Cancel anytime · Secured by Google Play'}
           </Text>
         </View>
       </ScrollView>

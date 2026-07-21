@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { getPremiumPackages, packageForPlan, type Plan } from '@/lib/purchases';
+import { getPremiumPackages, packageForPlan, packageHasTrial, type Plan } from '@/lib/purchases';
 
 const SUFFIX: Record<Plan, string> = {
   annual: ' / year',
@@ -11,22 +11,27 @@ const ALL_PLANS: Plan[] = ['annual', 'monthly', 'lifetime'];
 
 export function usePremiumPrices() {
   const [prices, setPrices] = useState<Partial<Record<Plan, string>>>({});
+  const [trials, setTrials] = useState<Partial<Record<Plan, boolean>>>({});
 
   useEffect(() => {
     let alive = true;
     getPremiumPackages().then((packages) => {
       if (!alive) return;
-      const next: Partial<Record<Plan, string>> = {};
+      const nextPrices: Partial<Record<Plan, string>> = {};
+      const nextTrials: Partial<Record<Plan, boolean>> = {};
       for (const plan of ALL_PLANS) {
         const pkg = packageForPlan(packages, plan);
-        if (pkg) next[plan] = pkg.product.priceString + SUFFIX[plan];
+        if (!pkg) continue;
+        nextPrices[plan] = pkg.product.priceString + SUFFIX[plan];
+        nextTrials[plan] = packageHasTrial(pkg);
       }
-      setPrices(next);
+      setPrices(nextPrices);
+      setTrials(nextTrials);
     });
     return () => {
       alive = false;
     };
   }, []);
 
-  return prices;
+  return { prices, trials };
 }

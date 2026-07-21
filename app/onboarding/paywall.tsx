@@ -9,6 +9,7 @@ import { useNow } from '@/hooks/useNow';
 import { msClean } from '@/lib/time';
 import { haptics } from '@/lib/haptics';
 import { purchasePlan, purchasesConfigured } from '@/lib/purchases';
+import { usePremiumPrices } from '@/hooks/usePremiumPrices';
 import { Cta } from '@/components/onboarding/Cta';
 import { Highlight } from '@/components/ui/Highlight';
 import { PlanPicker, type Plan } from '@/components/paywall/PlanPicker';
@@ -72,6 +73,7 @@ export default function Paywall() {
   const startTrial = useQuitStore((s) => s.startTrial);
   const firstReason = useQuitStore((s) => s.reasons[0]?.title?.trim());
   const now = useNow(250);
+  const { prices, trials } = usePremiumPrices();
   const [plan, setPlan] = useState<Plan>('annual');
   const [entering, setEntering] = useState(false);
   const [offering, setOffering] = useState(false);
@@ -164,8 +166,13 @@ export default function Paywall() {
           </View>
           <Text style={{ fontFamily: fonts.body, fontSize: 13, color: '#7E9A9B' }}>Join 100,000+ people clearing the air</Text>
         </View>
-        <Cta label={buying ? 'Opening Google Play…' : 'Unlock Clearway Premium'} onPress={buy} />
-        <Text style={{ fontFamily: fonts.body, fontSize: 12, color: '#7E9A9B', textAlign: 'center' }}>Cancel anytime · Secured by Google Play</Text>
+        <Cta
+          label={buying ? 'Opening Google Play…' : trials[plan] ? 'Start 7 days free' : 'Unlock Clearway Premium'}
+          onPress={buy}
+        />
+        <Text style={{ fontFamily: fonts.body, fontSize: 12, color: '#7E9A9B', textAlign: 'center' }}>
+          {trials[plan] ? `Free for 7 days, then ${prices[plan]} · Cancel anytime` : 'Cancel anytime · Secured by Google Play'}
+        </Text>
       </View>
 
       {offering ? <TrialOfferSheet onAccept={acceptTrial} onDecline={() => { setOffering(false); finish(); }} /> : null}

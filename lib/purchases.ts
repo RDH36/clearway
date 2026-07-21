@@ -38,6 +38,11 @@ export function packageForPlan(packages: PurchasesPackage[], plan: Plan) {
   return packages.find((p) => p.identifier === PLAN_TO_PACKAGE[plan]) ?? null;
 }
 
+export function packageHasTrial(pkg: PurchasesPackage): boolean {
+  if (pkg.product.defaultOption?.freePhase != null) return true;
+  return pkg.product.introPrice?.price === 0;
+}
+
 export async function purchasePlan(plan: Plan): Promise<{ entitled: boolean; cancelled: boolean }> {
   if (!purchasesConfigured()) return { entitled: false, cancelled: false };
   const pkg = packageForPlan(await getPremiumPackages(), plan);
