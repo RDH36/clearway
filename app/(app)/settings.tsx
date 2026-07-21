@@ -50,7 +50,7 @@ export default function Settings() {
 
   const [sheet, setSheet] = useState<Sheet>(null);
   const [toast, setToast] = useState<string | null>(null);
-  const { isPremium, managementURL } = usePremium();
+  const { isPremium } = usePremium();
   const {
     status: pinStatus,
     request: requestWidgetPin,
@@ -148,11 +148,9 @@ export default function Settings() {
 
           <Section label="Premium">
             <Row
-              label="Manage subscription"
+              label="My subscription"
               value={isPremium ? 'Premium' : 'Free'}
-              onPress={() =>
-                isPremium && managementURL ? Linking.openURL(managementURL) : router.push('/paywall')
-              }
+              onPress={() => router.push('/subscription')}
             />
             <Row label="Restore purchases" onPress={() => restorePurchases()} />
           </Section>

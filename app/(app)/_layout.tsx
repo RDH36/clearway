@@ -61,6 +61,15 @@ export default function AppLayout() {
           contentStyle: { backgroundColor: 'transparent' },
         }}
       />
+      <Stack.Screen
+        name="subscription"
+        options={{
+          animation: 'slide_from_right',
+          animationDuration: 320,
+          gestureEnabled: true,
+          gestureDirection: 'horizontal',
+        }}
+      />
       <Stack.Screen name="paywall" options={{ presentation: 'modal' }} />
     </Stack>
   );

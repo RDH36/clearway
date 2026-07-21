@@ -61,6 +61,7 @@ export function usePremium() {
   return {
     isPremium,
     entitled,
+    entitlement: info?.entitlements.active[ENTITLEMENT_ID] ?? null,
     trialActive,
     trialUsed,
     trialDaysLeft: Math.ceil(remaining / DAY_MS),
