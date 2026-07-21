@@ -54,7 +54,7 @@ export type QuitState = {
   trialStartedAt: number | null; // local 3-day trial start; null = never started
   trialUsed: boolean; // trial can only be taken once
   trialEndSeen: boolean; // paywall re-shown once at trial expiry
-  premiumCached: boolean; // last usePremium() value, for headless widget reads
+  entitledCached: boolean; // last RevenueCat entitlement (never the trial), for headless widget reads
 
   // bookkeeping
   hasRequestedReview: boolean; // in-app review fired once
@@ -76,7 +76,7 @@ export type QuitActions = {
   /** Accept the local 3-day trial (paywall dismiss offer). One-shot. */
   startTrial: () => void;
   setTrialEndSeen: (value: boolean) => void;
-  setPremiumCached: (value: boolean) => void;
+  setEntitledCached: (value: boolean) => void;
   markReviewRequested: () => void;
   /** Patch onboarding-quiz answers as they're tapped (spec §4). */
   setQuizAnswers: (patch: Partial<QuitState>) => void;
@@ -101,7 +101,7 @@ const DEFAULT_STATE: QuitState = {
   trialStartedAt: null,
   trialUsed: false,
   trialEndSeen: false,
-  premiumCached: false,
+  entitledCached: false,
   notifications: {
     enabled: false,
     dailyTime: '09:00',
@@ -156,16 +156,16 @@ export const useQuitStore = create<Store>()(
         set({ trialStartedAt: Date.now(), trialUsed: true, trialEndSeen: false });
       },
       setTrialEndSeen: (trialEndSeen) => set({ trialEndSeen }),
-      setPremiumCached: (premiumCached) => set({ premiumCached }),
+      setEntitledCached: (entitledCached) => set({ entitledCached }),
       markReviewRequested: () => set({ hasRequestedReview: true }),
       setQuizAnswers: (patch) => set(patch),
       resetAll: () => set({ ...DEFAULT_STATE }),
     }),
     {
       name: 'clearway-quit-store',
-      version: 4,
+      version: 5,
       migrate: (persisted, version) => {
-        let state = persisted as Partial<QuitState>;
+        let state = persisted as Partial<QuitState> & { premiumCached?: boolean };
         if (version < 2) state = { ...state, reasons: [] };
         if (version < 3)
           state = {
@@ -173,10 +173,13 @@ export const useQuitStore = create<Store>()(
             trialStartedAt: null,
             trialUsed: false,
             trialEndSeen: false,
-            premiumCached: false,
           };
         if (version < 4 && state.notifications)
           state = { ...state, notifications: { ...state.notifications, supportBar: true } };
+        if (version < 5) {
+          const { premiumCached, ...rest } = state;
+          state = { ...rest, entitledCached: false };
+        }
         return state;
       },
       storage: createJSONStorage(() => AsyncStorage),

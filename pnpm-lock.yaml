@@ -4,6 +4,11 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+patchedDependencies:
+  react-native-android-widget:
+    hash: 4a9ad6cff525ad0116025da581df64eeb0d106f7f4c83de28bcefa90bf84f2d1
+    path: patches/react-native-android-widget.patch
+
 importers:
 
   .:
@@ -79,7 +84,7 @@ importers:
         version: 0.85.3(@babel/core@7.29.7)(@react-native/metro-config@0.85.3(@babel/core@7.29.7))(@types/react@19.2.17)(react@19.2.3)
       react-native-android-widget:
         specifier: ^0.20.3
-        version: 0.20.3(expo@56.0.12)(react-native@0.85.3(@babel/core@7.29.7)(@react-native/metro-config@0.85.3(@babel/core@7.29.7))(@types/react@19.2.17)(react@19.2.3))(react@19.2.3)
+        version: 0.20.3(patch_hash=4a9ad6cff525ad0116025da581df64eeb0d106f7f4c83de28bcefa90bf84f2d1)(expo@56.0.12)(react-native@0.85.3(@babel/core@7.29.7)(@react-native/metro-config@0.85.3(@babel/core@7.29.7))(@types/react@19.2.17)(react@19.2.3))(react@19.2.3)
       react-native-ease:
         specifier: ^0.7.3
         version: 0.7.3(4d880288d0b229d09d8195a159c0b9db)
@@ -5635,7 +5640,9 @@ snapshots:
       metro-runtime: 0.84.4
     transitivePeerDependencies:
       - '@babel/core'
+      - bufferutil
       - supports-color
+      - utf-8-validate
 
   '@react-native/normalize-colors@0.85.3': {}
 
@@ -8249,7 +8256,7 @@ snapshots:
 
   react-is@19.2.7: {}
 
-  react-native-android-widget@0.20.3(expo@56.0.12)(react-native@0.85.3(@babel/core@7.29.7)(@react-native/metro-config@0.85.3(@babel/core@7.29.7))(@types/react@19.2.17)(react@19.2.3))(react@19.2.3):
+  react-native-android-widget@0.20.3(patch_hash=4a9ad6cff525ad0116025da581df64eeb0d106f7f4c83de28bcefa90bf84f2d1)(expo@56.0.12)(react-native@0.85.3(@babel/core@7.29.7)(@react-native/metro-config@0.85.3(@babel/core@7.29.7))(@types/react@19.2.17)(react@19.2.3))(react@19.2.3):
     dependencies:
       react: 19.2.3
       react-native: 0.85.3(@babel/core@7.29.7)(@react-native/metro-config@0.85.3(@babel/core@7.29.7))(@types/react@19.2.17)(react@19.2.3)

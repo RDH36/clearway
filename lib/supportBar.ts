@@ -5,12 +5,11 @@ import * as TaskManager from 'expo-task-manager';
 import * as BackgroundTask from 'expo-background-task';
 import { buildWidgetData } from '@/components/widget/data';
 import { refreshWidget } from '@/components/widget/refresh';
-import { DAY_MS } from '@/constants/time';
+import { premiumFromPersisted } from '@/lib/premium';
 
 const TASK = 'clearway-support-bar';
 const NOTIF_ID = 'clearway-support-bar';
 const CHANNEL_ID = 'support-bar';
-const TRIAL_MS = 3 * DAY_MS;
 
 async function ensureChannel() {
   await Notifications.setNotificationChannelAsync(CHANNEL_ID, {
@@ -24,9 +23,7 @@ async function supportBarAllowed(): Promise<boolean> {
   const raw = await AsyncStorage.getItem('clearway-quit-store');
   const state = raw ? JSON.parse(raw)?.state : null;
   if (!state?.notifications?.supportBar) return false;
-  const trialActive =
-    state.trialStartedAt != null && Date.now() - state.trialStartedAt < TRIAL_MS;
-  return Boolean(state.premiumCached) || trialActive;
+  return premiumFromPersisted(state);
 }
 
 export async function hideSupportBar() {

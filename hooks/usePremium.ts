@@ -1,25 +1,20 @@
 import { useEffect, useState } from 'react';
 import Purchases, { type CustomerInfo } from 'react-native-purchases';
 import { ENTITLEMENT_ID, purchasesConfigured } from '@/lib/purchases';
+import { trialRemainingMs } from '@/lib/premium';
 import { useQuitStore } from '@/store/useQuitStore';
 import { DAY_MS, MINUTE_MS } from '@/constants/time';
-
-export const TRIAL_MS = 3 * DAY_MS;
-
-export function trialRemainingMs(trialStartedAt: number | null, now: number): number {
-  if (trialStartedAt == null) return 0;
-  return Math.max(0, trialStartedAt + TRIAL_MS - now);
-}
 
 const nowMs = () => Date.now();
 
 export function usePremium() {
   const trialStartedAt = useQuitStore((s) => s.trialStartedAt);
   const trialUsed = useQuitStore((s) => s.trialUsed);
-  const premiumCached = useQuitStore((s) => s.premiumCached);
-  const setPremiumCached = useQuitStore((s) => s.setPremiumCached);
+  const entitledCached = useQuitStore((s) => s.entitledCached);
+  const setEntitledCached = useQuitStore((s) => s.setEntitledCached);
 
   const [info, setInfo] = useState<CustomerInfo | null>(null);
+  const [infoLoaded, setInfoLoaded] = useState(false);
   const [now, setNow] = useState(nowMs);
 
   useEffect(() => {
@@ -27,10 +22,16 @@ export function usePremium() {
     let mounted = true;
     Purchases.getCustomerInfo()
       .then((next) => {
-        if (mounted) setInfo(next);
+        if (mounted) {
+          setInfo(next);
+          setInfoLoaded(true);
+        }
       })
       .catch(() => {});
-    const listener = (next: CustomerInfo) => setInfo(next);
+    const listener = (next: CustomerInfo) => {
+      setInfo(next);
+      setInfoLoaded(true);
+    };
     Purchases.addCustomerInfoUpdateListener(listener);
     return () => {
       mounted = false;
@@ -49,10 +50,13 @@ export function usePremium() {
   const entitled = info?.entitlements.active[ENTITLEMENT_ID] != null;
   const trialActive = remaining > 0;
   const isPremium = entitled || trialActive;
+  const entitlementResolved = !purchasesConfigured() || infoLoaded;
 
   useEffect(() => {
-    if (premiumCached !== isPremium) setPremiumCached(isPremium);
-  }, [isPremium, premiumCached, setPremiumCached]);
+    if (entitledCached === entitled) return;
+    if (!entitled && !entitlementResolved) return;
+    setEntitledCached(entitled);
+  }, [entitled, entitledCached, entitlementResolved, setEntitledCached]);
 
   return {
     isPremium,

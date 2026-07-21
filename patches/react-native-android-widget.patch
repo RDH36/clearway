@@ -1,0 +1,22 @@
+diff --git a/android/src/main/res/layout/rn_widget.xml b/android/src/main/res/layout/rn_widget.xml
+index 870d18b36ff15ed69ab14632e6bee54f3a9e2920..c2b7aea1422de02f891661bbb54c865c96f09038 100644
+--- a/android/src/main/res/layout/rn_widget.xml
++++ b/android/src/main/res/layout/rn_widget.xml
+@@ -8,7 +8,7 @@
+         android:layout_width="match_parent"
+         android:layout_height="match_parent"
+         android:background="@android:color/transparent"
+-        android:scaleType="matrix"
++        android:scaleType="fitXY"
+         android:visibility="visible" />
+ 
+     <ImageView
+@@ -16,7 +16,7 @@
+         android:layout_width="match_parent"
+         android:layout_height="match_parent"
+         android:background="@android:color/transparent"
+-        android:scaleType="matrix"
++        android:scaleType="fitXY"
+         android:visibility="gone" />
+ 
+     <FrameLayout

@@ -5,6 +5,7 @@ import { formatMoney, remainingText } from '@/lib/format';
 import { progress } from '@/lib/milestones';
 import { unlocked } from '@/lib/health';
 import { pickAffirmation, reasonLabel } from '@/lib/affirmations';
+import { premiumFromPersisted } from '@/lib/premium';
 import { DAY_MS, HOUR_MS } from '@/constants/time';
 import type { Motivation } from '@/store/useQuitStore';
 
@@ -22,8 +23,6 @@ export type WidgetData = {
   reason: string;
   affirmation: string;
 };
-
-const TRIAL_MS = 3 * DAY_MS;
 
 const FALLBACK: WidgetData = {
   phase: 'why',
@@ -61,10 +60,7 @@ export async function buildWidgetData(): Promise<WidgetData> {
       return { ...FALLBACK, reason, affirmation: supportText };
     }
 
-    const trialActive =
-      state.trialStartedAt != null && Date.now() - state.trialStartedAt < TRIAL_MS;
-    const premium =
-      Boolean(state.premiumCached) || trialActive || !state.onboardingComplete;
+    const premium = premiumFromPersisted(state) || !state.onboardingComplete;
     if (!premium) return { ...FALLBACK, phase: 'expired', reason, affirmation: supportText };
 
     const p = progress(ms);
