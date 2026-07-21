@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import Animated, { FadeInDown, FadeOutUp } from 'react-native-reanimated';
@@ -8,9 +8,10 @@ import { pickAffirmation, reasonLabel } from '@/lib/affirmations';
 import { formatMoney } from '@/lib/format';
 import { sendWelcomeNotification } from '@/lib/notifications';
 import { haptics } from '@/lib/haptics';
-import { requestPinClearwayWidget } from '@/modules/widget-pin';
+import { useWidgetPin } from '@/hooks/useWidgetPin';
 import { Shell } from '@/components/onboarding/Shell';
 import { Cta } from '@/components/onboarding/Cta';
+import { Toast } from '@/components/feedback/Toast';
 import { Highlight } from '@/components/ui/Highlight';
 import { fonts } from '@/constants/theme';
 
@@ -52,6 +53,11 @@ export default function OnboardingSetup() {
   const firstReason = useQuitStore((s) => s.reasons[0]?.title);
 
   const [beat, setBeat] = useState<Beat>('affirmation');
+  const [toast, setToast] = useState<string | null>(null);
+  const { status: pinStatus, request: requestWidgetPin } = useWidgetPin(() =>
+    setToast('Widget added to your home screen')
+  );
+  const leavingRef = useRef(false);
 
   const reason = reasonLabel(firstReason, motivation);
   const dayMoney = formatMoney(weekly / 7);
@@ -59,17 +65,18 @@ export default function OnboardingSetup() {
 
   const toPaywall = () => router.push('/onboarding/paywall');
 
-  const addWidget = () => {
-    requestPinClearwayWidget();
-    haptics.tap();
-    setBeat('notif');
-  };
-
   const enableNotifs = async () => {
-    setNotifications({ enabled: true });
-    await sendWelcomeNotification(reason);
-    haptics.milestone();
-    toPaywall();
+    if (leavingRef.current) return;
+    leavingRef.current = true;
+    const sent = await sendWelcomeNotification(reason);
+    setNotifications({ enabled: sent });
+    if (sent) {
+      haptics.milestone();
+      setToast('Sent — check your notifications');
+    } else {
+      setToast('Allow notifications in your phone settings');
+    }
+    setTimeout(toPaywall, 1200);
   };
 
   return (
@@ -109,12 +116,16 @@ export default function OnboardingSetup() {
                 <Text style={{ fontFamily: fonts.mono, fontSize: 12, color: '#5BE0C6', paddingBottom: 4 }}>{dayMoney} kept</Text>
               </View>
               <View style={{ height: 1, backgroundColor: 'rgba(35,56,62,0.7)' }} />
-              <Text style={{ fontFamily: fonts.body, fontSize: 12.5, color: '#9FB4B3' }}>
-                Tomorrow morning, on your home screen.
+              <Text style={{ fontFamily: fonts.body, fontSize: 12.5, color: pinStatus === 'added' ? '#5BE0C6' : '#9FB4B3' }}>
+                {pinStatus === 'added' ? '✓ On your home screen — see you tomorrow morning.' : 'Tomorrow morning, on your home screen.'}
               </Text>
             </View>
             <Highlight
-              text="**Every glance** at your phone — a reminder of **how far you've come.**"
+              text={
+                pinStatus === 'help'
+                  ? '**Nothing appeared?** Long-press your home screen → **Widgets** → drag **Clearway** anywhere.'
+                  : "**Every glance** at your phone — a reminder of **how far you've come.**"
+              }
               style={{ fontFamily: fonts.body, fontSize: 14.5, lineHeight: 21, color: '#9FB4B3' }}
             />
           </Animated.View>
@@ -150,8 +161,12 @@ export default function OnboardingSetup() {
             <Cta label="Next →" onPress={() => setBeat('widget')} />
           ) : beat === 'widget' ? (
             <>
-              <Cta label="Add the widget" onPress={addWidget} />
-              <Skip label="Maybe later" onPress={() => setBeat('notif')} />
+              {pinStatus === 'added' ? (
+                <Cta label="Next →" onPress={() => setBeat('notif')} />
+              ) : (
+                <Cta label="Add the widget" onPress={requestWidgetPin} />
+              )}
+              <Skip label={pinStatus === 'help' ? "I'll do it later" : 'Maybe later'} onPress={() => setBeat('notif')} />
             </>
           ) : (
             <>
@@ -161,6 +176,7 @@ export default function OnboardingSetup() {
           )}
         </View>
       </View>
+      <Toast message={toast} onHide={() => setToast(null)} />
     </Shell>
   );
 }

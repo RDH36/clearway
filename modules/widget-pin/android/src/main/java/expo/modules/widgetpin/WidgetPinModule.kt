@@ -20,6 +20,14 @@ class WidgetPinModule : Module() {
       manager()?.isRequestPinAppWidgetSupported ?: false
     }
 
+    Function("pinnedCount") {
+      val context = appContext.reactContext ?: return@Function 0
+      val mgr = manager() ?: return@Function 0
+      mgr.installedProviders
+        .filter { it.provider.packageName == context.packageName }
+        .sumOf { mgr.getAppWidgetIds(it.provider).size }
+    }
+
     Function("requestPin") { providerClassName: String ->
       val context = appContext.reactContext ?: return@Function false
       val mgr = manager() ?: return@Function false

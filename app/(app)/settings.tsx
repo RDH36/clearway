@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Linking, ScrollView, Text, View } from 'react-native';
+import { Linking, Platform, ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -14,8 +14,11 @@ import { Group, Row, SectionLabel, withAlpha } from '@/components/settings/Setti
 import { Toggle } from '@/components/settings/Toggle';
 import { AppearanceRow } from '@/components/settings/AppearanceRow';
 import { PRIVACY_URL, TERMS_URL, rateApp, restorePurchases, sendFeedback, shareApp } from '@/components/settings/actions';
-import { isWidgetPinSupported, requestPinClearwayWidget } from '@/modules/widget-pin';
+import { useWidgetPin } from '@/hooks/useWidgetPin';
 import { ensureNotificationPermission } from '@/lib/notifications';
+import { haptics } from '@/lib/haptics';
+import { Toast } from '@/components/feedback/Toast';
+import { WidgetHelpSheet } from '@/components/feedback/WidgetHelpSheet';
 import { QuitDateSheet } from '@/components/settings/sheets/QuitDateSheet';
 import { CURRENCY_SYMBOL, FrequencySheet, WeeklyCostSheet } from '@/components/settings/sheets/EditValueSheets';
 import { ReminderTimeSheet, formatTime12 } from '@/components/settings/sheets/ReminderTimeSheet';
@@ -46,7 +49,13 @@ export default function Settings() {
   const setNotifications = useQuitStore((s) => s.setNotifications);
 
   const [sheet, setSheet] = useState<Sheet>(null);
+  const [toast, setToast] = useState<string | null>(null);
   const { isPremium, managementURL } = usePremium();
+  const {
+    status: pinStatus,
+    request: requestWidgetPin,
+    dismissHelp,
+  } = useWidgetPin(() => setToast('Widget added to your home screen'));
 
   const quitDateLabel = quitTimestamp
     ? new Date(quitTimestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
@@ -96,7 +105,21 @@ export default function Settings() {
             <AppearanceRow />
             <Row
               label="Notifications"
-              right={<Toggle value={notifications.enabled} onChange={(enabled) => setNotifications({ enabled })} />}
+              right={
+                <Toggle
+                  value={notifications.enabled}
+                  onChange={async (enabled) => {
+                    haptics.tap();
+                    if (!enabled) {
+                      setNotifications({ enabled: false });
+                      return;
+                    }
+                    const granted = await ensureNotificationPermission();
+                    setNotifications({ enabled: granted });
+                    setToast(granted ? 'Daily reminder is on' : 'Allow notifications in your phone settings');
+                  }}
+                />
+              }
             />
             {notifications.enabled ? (
               <Row label="Daily reminder" value={formatTime12(notifications.dailyTime)} onPress={() => setSheet('time')} />
@@ -118,8 +141,8 @@ export default function Settings() {
                 />
               }
             />
-            {isWidgetPinSupported() ? (
-              <Row label="Add widget to home screen" onPress={() => requestPinClearwayWidget()} />
+            {Platform.OS === 'android' ? (
+              <Row label="Add widget to home screen" onPress={requestWidgetPin} />
             ) : null}
           </Section>
 
@@ -158,6 +181,8 @@ export default function Settings() {
       {sheet === 'frequency' ? <FrequencySheet onClose={() => setSheet(null)} /> : null}
       {sheet === 'time' ? <ReminderTimeSheet onClose={() => setSheet(null)} /> : null}
       {sheet === 'delete' ? <ConfirmDeleteSheet onClose={() => setSheet(null)} /> : null}
+      {pinStatus === 'help' ? <WidgetHelpSheet onClose={dismissHelp} /> : null}
+      <Toast message={toast} onHide={() => setToast(null)} />
     </View>
   );
 }
