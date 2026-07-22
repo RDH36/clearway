@@ -13,6 +13,7 @@
     },
     "android": {
       "package": "com.rdh36.clearway",
+      "blockedPermissions": ["android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"],
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0E1B1F"
