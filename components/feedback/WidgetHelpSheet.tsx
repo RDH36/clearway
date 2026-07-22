@@ -39,6 +39,10 @@ export function WidgetHelpSheet({ onClose }: { onClose: () => void }) {
               </View>
             ))}
           </View>
+          <Text style={{ fontFamily: fonts.body, fontSize: 12.5, lineHeight: 18, color: colors.muted }}>
+            On Xiaomi, you can also allow “Home screen shortcuts” in Settings → Apps → Clearway → Other permissions —
+            then the button above adds it instantly.
+          </Text>
           <SheetButton label="Got it" onPress={() => requestClose()} />
         </View>
       )}
