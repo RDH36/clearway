@@ -25,6 +25,8 @@ export function useWidgetPin(onAdded?: () => void) {
         haptics.milestone();
         setStatus('added');
         refreshWidget();
+        setTimeout(refreshWidget, 4000);
+        setTimeout(refreshWidget, 12000);
         onAddedRef.current?.();
         return;
       }
