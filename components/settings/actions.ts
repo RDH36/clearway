@@ -4,8 +4,8 @@ import Purchases from 'react-native-purchases';
 import { ENTITLEMENT_ID, purchasesConfigured } from '@/lib/purchases';
 import { haptics } from '@/lib/haptics';
 
-export const PRIVACY_URL = 'https://clearway.app/privacy';
-export const TERMS_URL = 'https://clearway.app/terms';
+export const PRIVACY_URL = 'https://clearway-lilac.vercel.app/privacy';
+export const TERMS_URL = 'https://clearway-lilac.vercel.app/terms';
 
 export async function rateApp() {
   if (await StoreReview.isAvailableAsync()) {
