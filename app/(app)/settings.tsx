@@ -13,18 +13,19 @@ import { BackIcon } from '@/components/progress/icons';
 import { Group, Row, SectionLabel, withAlpha } from '@/components/settings/SettingsGroup';
 import { Toggle } from '@/components/settings/Toggle';
 import { AppearanceRow } from '@/components/settings/AppearanceRow';
-import { PRIVACY_URL, TERMS_URL, rateApp, restorePurchases, sendFeedback, shareApp } from '@/components/settings/actions';
+import { PRIVACY_URL, TERMS_URL, rateApp, restorePurchases, shareApp } from '@/components/settings/actions';
 import { useWidgetPin } from '@/hooks/useWidgetPin';
 import { ensureNotificationPermission } from '@/lib/notifications';
 import { haptics } from '@/lib/haptics';
 import { Toast } from '@/components/feedback/Toast';
 import { WidgetHelpSheet } from '@/components/feedback/WidgetHelpSheet';
+import { FeedbackSheet } from '@/components/feedback/FeedbackSheet';
 import { QuitDateSheet } from '@/components/settings/sheets/QuitDateSheet';
 import { CURRENCY_SYMBOL, FrequencySheet, WeeklyCostSheet } from '@/components/settings/sheets/EditValueSheets';
 import { ReminderTimeSheet, formatTime12 } from '@/components/settings/sheets/ReminderTimeSheet';
 import { ConfirmDeleteSheet } from '@/components/settings/sheets/ConfirmDeleteSheet';
 
-type Sheet = 'date' | 'cost' | 'frequency' | 'time' | 'delete' | null;
+type Sheet = 'date' | 'cost' | 'frequency' | 'time' | 'delete' | 'feedback' | null;
 
 function Section({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -157,7 +158,7 @@ export default function Settings() {
 
           <Section label="Support">
             <Row label="Rate the app" onPress={() => rateApp()} />
-            <Row label="Send feedback" onPress={sendFeedback} />
+            <Row label="Send feedback" onPress={() => setSheet('feedback')} />
             <Row label="Share Clearway" onPress={shareApp} />
           </Section>
 
@@ -179,6 +180,7 @@ export default function Settings() {
       {sheet === 'frequency' ? <FrequencySheet onClose={() => setSheet(null)} /> : null}
       {sheet === 'time' ? <ReminderTimeSheet onClose={() => setSheet(null)} /> : null}
       {sheet === 'delete' ? <ConfirmDeleteSheet onClose={() => setSheet(null)} /> : null}
+      {sheet === 'feedback' ? <FeedbackSheet onClose={() => setSheet(null)} /> : null}
       {pinStatus === 'help' ? <WidgetHelpSheet onClose={dismissHelp} /> : null}
       <Toast message={toast} onHide={() => setToast(null)} />
     </View>

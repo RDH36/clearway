@@ -16,10 +16,6 @@ export async function rateApp() {
   if (url) Linking.openURL(url);
 }
 
-export function sendFeedback() {
-  Linking.openURL('mailto:hello@clearway.app?subject=Clearway%20feedback');
-}
-
 export async function restorePurchases() {
   if (!purchasesConfigured()) return false;
   try {
