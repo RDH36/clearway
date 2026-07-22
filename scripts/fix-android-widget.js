@@ -26,7 +26,7 @@ const PREVIOUS_SIZE_FN = `    private static int getWidgetSizeInDp(Context conte
         return (int) Math.round(pxToDp(context, fallbackPx));
     }`;
 
-const PATCHED_SIZE_FN = `    private static int getWidgetSizeInDp(Context context, int widgetId, String key) {
+const PREVIOUS_V2_SIZE_FN = `    private static int getWidgetSizeInDp(Context context, int widgetId, String key) {
         int value = AppWidgetManager.getInstance(context).getAppWidgetOptions(widgetId).getInt(key, 0);
         if (value > 0) {
             return value;
@@ -46,12 +46,39 @@ const PATCHED_SIZE_FN = `    private static int getWidgetSizeInDp(Context contex
         return small ? 158 : 168;
     }`;
 
+const PATCHED_SIZE_FN = `    private static int getWidgetSizeInDp(Context context, int widgetId, String key) {
+        int value = AppWidgetManager.getInstance(context).getAppWidgetOptions(widgetId).getInt(key, 0);
+        if (value > 0) {
+            return value;
+        }
+
+        AppWidgetProviderInfo providerInfo = AppWidgetManager.getInstance(context).getAppWidgetInfo(widgetId);
+        if (providerInfo == null) {
+            return 0;
+        }
+
+        int base = context.getResources().getConfiguration().screenWidthDp - 42;
+        boolean small = providerInfo.provider.getShortClassName().endsWith("ClearwaySmall");
+        if (small) {
+            return Math.max(150, Math.round(base * 0.48f));
+        }
+
+        boolean isWidth = AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH.equals(key)
+            || AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH.equals(key);
+        if (isWidth) {
+            return Math.max(300, base);
+        }
+        return Math.max(160, Math.round(base * 0.55f));
+    }`;
+
 const layout = fs.readFileSync(layoutPath, 'utf8');
 fs.writeFileSync(layoutPath, layout.replace(/android:scaleType="matrix"/g, 'android:scaleType="fitXY"'));
 
 let util = fs.readFileSync(utilPath, 'utf8').replace(/\r\n/g, '\n');
-if (!util.includes('ClearwaySmall')) {
-  if (util.includes(PREVIOUS_SIZE_FN)) {
+if (!util.includes('screenWidthDp - 42')) {
+  if (util.includes(PREVIOUS_V2_SIZE_FN)) {
+    util = util.replace(PREVIOUS_V2_SIZE_FN, PATCHED_SIZE_FN);
+  } else if (util.includes(PREVIOUS_SIZE_FN)) {
     util = util.replace(PREVIOUS_SIZE_FN, PATCHED_SIZE_FN);
   } else if (util.includes(ORIGINAL_SIZE_FN)) {
     util = util.replace(ORIGINAL_SIZE_FN, PATCHED_SIZE_FN);
