@@ -10,7 +10,8 @@
     "prebuild": "expo prebuild",
     "typecheck": "tsc --noEmit",
     "lint": "expo lint",
-    "doctor": "npx expo-doctor"
+    "doctor": "npx expo-doctor",
+    "postinstall": "node scripts/fix-android-widget.js"
   },
   "dependencies": {
     "@expo-google-fonts/bricolage-grotesque": "^0.4.1",

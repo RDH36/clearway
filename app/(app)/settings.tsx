@@ -60,7 +60,7 @@ export default function Settings() {
   const quitDateLabel = quitTimestamp
     ? new Date(quitTimestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
     : '—';
-  const version = Constants.expoConfig?.version ?? '1.0.0';
+  const version = `${Constants.expoConfig?.version ?? '1.0.0'} (${Constants.nativeBuildVersion ?? '—'})`;
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.base }}>
