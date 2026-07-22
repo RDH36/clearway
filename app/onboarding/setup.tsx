@@ -8,6 +8,7 @@ import { pickAffirmation, reasonLabel } from '@/lib/affirmations';
 import { formatMoney } from '@/lib/format';
 import { sendWelcomeNotification } from '@/lib/notifications';
 import { haptics } from '@/lib/haptics';
+import { track } from '@/lib/analytics';
 import { useWidgetPin } from '@/hooks/useWidgetPin';
 import { Shell } from '@/components/onboarding/Shell';
 import { Cta } from '@/components/onboarding/Cta';
@@ -70,6 +71,7 @@ export default function OnboardingSetup() {
     leavingRef.current = true;
     const sent = await sendWelcomeNotification(reason);
     setNotifications({ enabled: sent });
+    track('notifications_enabled', { source: 'onboarding', granted: sent });
     if (sent) {
       haptics.milestone();
       setToast('Sent — check your notifications');

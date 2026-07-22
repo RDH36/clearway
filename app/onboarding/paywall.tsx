@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -8,6 +8,7 @@ import { useQuitStore } from '@/store/useQuitStore';
 import { useNow } from '@/hooks/useNow';
 import { msClean } from '@/lib/time';
 import { haptics } from '@/lib/haptics';
+import { track } from '@/lib/analytics';
 import { purchasePlan, purchasesConfigured } from '@/lib/purchases';
 import { usePremiumPrices } from '@/hooks/usePremiumPrices';
 import { Cta } from '@/components/onboarding/Cta';
@@ -79,6 +80,10 @@ export default function Paywall() {
   const [offering, setOffering] = useState(false);
   const [buying, setBuying] = useState(false);
 
+  useEffect(() => {
+    track('paywall_viewed', { source: 'onboarding' });
+  }, []);
+
   const sec = Math.floor(msClean(quit, now) / 1000);
   const hms = `${pad(Math.floor(sec / 3600))} : ${pad(Math.floor((sec % 3600) / 60))} : ${pad(sec % 60)}`;
 
@@ -107,12 +112,14 @@ export default function Paywall() {
   };
   const acceptTrial = () => {
     startTrial();
+    track('trial_started');
     haptics.purchaseSuccess();
     setOffering(false);
     finish();
   };
   const enterHome = useCallback(() => {
     setOnboardingComplete(true);
+    track('onboarding_completed');
     router.replace('/');
   }, [router, setOnboardingComplete]);
 

@@ -10,6 +10,7 @@ import { PressableScale } from 'pressto';
 import { useQuitStore } from '@/store/useQuitStore';
 import { msClean } from '@/lib/time';
 import { haptics } from '@/lib/haptics';
+import { track } from '@/lib/analytics';
 import { DAY_MS } from '@/constants/time';
 import { fonts } from '@/constants/theme';
 
@@ -59,6 +60,7 @@ export default function Reset() {
   const confirm = () => {
     haptics.resetConfirm();
     slip();
+    track('slip_recorded');
     router.back();
   };
 

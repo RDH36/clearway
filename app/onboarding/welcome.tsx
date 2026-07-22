@@ -5,6 +5,7 @@ import { Shell } from '@/components/onboarding/Shell';
 import { Cta } from '@/components/onboarding/Cta';
 import { Orb } from '@/components/onboarding/Orb';
 import { Highlight } from '@/components/ui/Highlight';
+import { track } from '@/lib/analytics';
 import { fonts } from '@/constants/theme';
 
 export default function Welcome() {
@@ -27,7 +28,13 @@ export default function Welcome() {
           style={{ fontFamily: fonts.body, fontSize: 15, lineHeight: 23, color: '#AFC4C2', textAlign: 'center', maxWidth: 260 }}
         />
       </Animated.View>
-      <Cta label="GET STARTED" onPress={() => router.push('/onboarding/quiz')} />
+      <Cta
+        label="GET STARTED"
+        onPress={() => {
+          track('onboarding_started');
+          router.push('/onboarding/quiz');
+        }}
+      />
     </Shell>
   );
 }

@@ -3,6 +3,7 @@ import { usePremium } from '@/hooks/usePremium';
 import { useQuitStore } from '@/store/useQuitStore';
 import { initNotifications, syncEncouragementSchedule } from '@/lib/notifications';
 import { syncSupportBar } from '@/lib/supportBar';
+import { posthog } from '@/lib/analytics';
 import { refreshWidget } from '@/components/widget/refresh';
 
 export function PremiumSync() {
@@ -18,6 +19,7 @@ export function PremiumSync() {
   }, []);
 
   useEffect(() => {
+    posthog.register({ premium: isPremium });
     syncEncouragementSchedule(
       { quitTimestamp, weeklySpend, primaryMotivation, reasons, notifications },
       isPremium

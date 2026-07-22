@@ -15,6 +15,7 @@ import { ClearBurst } from '@/components/onboarding/ClearBurst';
 import { Orb } from '@/components/onboarding/Orb';
 import { SmokeCompare } from '@/components/home/SmokeCompare';
 import { useQuitStore } from '@/store/useQuitStore';
+import { track } from '@/lib/analytics';
 import { useNow } from '@/hooks/useNow';
 import { msClean, formatClean } from '@/lib/time';
 import { projectedYear } from '@/lib/money';
@@ -65,6 +66,7 @@ export default function Wow() {
     }
 
     startQuit();
+    track('quit_started');
     setStage('pulse');
     orb.value = withSequence(withTiming(1.34, { duration: 220 }), withTiming(0.92, { duration: 300 }), withTiming(1, { duration: 340 }));
     timers.current.push(

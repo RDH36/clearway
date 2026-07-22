@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Linking, ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -11,6 +11,7 @@ import { BackIcon } from '@/components/progress/icons';
 import { Group, Row, SectionLabel, withAlpha } from '@/components/settings/SettingsGroup';
 import { restorePurchases } from '@/components/settings/actions';
 import { Toast } from '@/components/feedback/Toast';
+import { track } from '@/lib/analytics';
 
 const PLAY_SUBSCRIPTIONS_URL = 'https://play.google.com/store/account/subscriptions';
 
@@ -33,6 +34,13 @@ export default function Subscription() {
   const [restoring, setRestoring] = useState(false);
 
   const { entitled, entitlement, trialActive, trialDaysLeft, managementURL } = usePremium();
+
+  const viewTracked = useRef(false);
+  useEffect(() => {
+    if (viewTracked.current) return;
+    viewTracked.current = true;
+    track('subscription_viewed', { status: entitled ? 'premium' : trialActive ? 'trial' : 'free' });
+  }, [entitled, trialActive]);
 
   const lifetime = entitled && (entitlement?.expirationDate == null || planLabel(entitlement.productIdentifier) === 'Lifetime');
   const expiresOn = fmtDate(entitlement?.expirationDate);

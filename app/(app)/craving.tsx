@@ -28,6 +28,7 @@ import { useBreathPhase } from '@/hooks/useBreathPhase';
 import { usePremium } from '@/hooks/usePremium';
 import { useQuitStore } from '@/store/useQuitStore';
 import { msClean } from '@/lib/time';
+import { track } from '@/lib/analytics';
 import { clarity } from '@/lib/atmosphere';
 import { primeBreathCue } from '@/lib/sound';
 import { patternById, type PatternId } from '@/lib/breathing';
@@ -91,6 +92,7 @@ export default function Craving() {
 
   useEffect(() => {
     primeBreathCue();
+    track('craving_opened');
   }, []);
 
   // Heavier haze → stronger scrim + darker cards, so they keep contrast when the air is thick.

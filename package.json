@@ -34,6 +34,7 @@
     "expo-system-ui": "~56.0.5",
     "expo-task-manager": "~56.0.21",
     "nativewind": "^4.2.6",
+    "posthog-react-native": "^4.58.0",
     "pressto": "^0.7.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",

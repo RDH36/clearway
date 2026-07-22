@@ -1,5 +1,6 @@
 import { Platform } from 'react-native';
 import Purchases, { LOG_LEVEL, type PurchasesPackage } from 'react-native-purchases';
+import { track } from '@/lib/analytics';
 
 const ANDROID_KEY = 'goog_nLCyIZXWEGUvYiMZdZcvCXGLOfs';
 const IOS_KEY = 'appl_REPLACE_WITH_PUBLIC_SDK_KEY';
@@ -49,8 +50,12 @@ export async function purchasePlan(plan: Plan): Promise<{ entitled: boolean; can
   if (!pkg) return { entitled: false, cancelled: false };
   try {
     const { customerInfo } = await Purchases.purchasePackage(pkg);
-    return { entitled: customerInfo.entitlements.active[ENTITLEMENT_ID] != null, cancelled: false };
+    const entitled = customerInfo.entitlements.active[ENTITLEMENT_ID] != null;
+    if (entitled) track('purchase_completed', { plan });
+    return { entitled, cancelled: false };
   } catch (e) {
-    return { entitled: false, cancelled: (e as { userCancelled?: boolean })?.userCancelled === true };
+    const cancelled = (e as { userCancelled?: boolean })?.userCancelled === true;
+    if (cancelled) track('purchase_cancelled', { plan });
+    return { entitled: false, cancelled };
   }
 }

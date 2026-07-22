@@ -6,6 +6,7 @@ import { withAlpha } from '@/components/settings/SettingsGroup';
 import { SettingsSheet, SheetButton } from '@/components/settings/SettingsSheet';
 import { submitFeedback } from '@/lib/feedback';
 import { haptics } from '@/lib/haptics';
+import { track } from '@/lib/analytics';
 
 const MAX_LENGTH = 500;
 
@@ -41,6 +42,7 @@ export function FeedbackSheet({ onClose }: { onClose: () => void }) {
       return;
     }
     haptics.milestone();
+    track('feedback_sent');
     setSent(true);
     setTimeout(() => requestClose(), 1600);
   };

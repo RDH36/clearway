@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { pinnedWidgetCount, requestPinClearwayWidget } from '@/modules/widget-pin';
 import { refreshWidget } from '@/components/widget/refresh';
 import { haptics } from '@/lib/haptics';
+import { track } from '@/lib/analytics';
 
 export type WidgetPinStatus = 'idle' | 'waiting' | 'help' | 'added';
 
@@ -24,6 +25,7 @@ export function useWidgetPin(onAdded?: () => void) {
       if (pinnedWidgetCount() > baseline.current) {
         haptics.milestone();
         setStatus('added');
+        track('widget_added');
         refreshWidget();
         setTimeout(refreshWidget, 4000);
         setTimeout(refreshWidget, 12000);
@@ -32,6 +34,7 @@ export function useWidgetPin(onAdded?: () => void) {
       }
       if (status === 'waiting' && Date.now() - startedAt.current >= HELP_AFTER_MS) {
         setStatus('help');
+        track('widget_add_blocked');
       }
     }, POLL_MS);
     return () => clearInterval(id);
@@ -39,6 +42,7 @@ export function useWidgetPin(onAdded?: () => void) {
 
   const request = () => {
     haptics.tap();
+    track('widget_add_requested');
     baseline.current = pinnedWidgetCount();
     startedAt.current = Date.now();
     setStatus(requestPinClearwayWidget() ? 'waiting' : 'help');

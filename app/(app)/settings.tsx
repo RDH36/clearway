@@ -17,6 +17,7 @@ import { PRIVACY_URL, TERMS_URL, rateApp, restorePurchases, shareApp } from '@/c
 import { useWidgetPin } from '@/hooks/useWidgetPin';
 import { ensureNotificationPermission } from '@/lib/notifications';
 import { haptics } from '@/lib/haptics';
+import { track } from '@/lib/analytics';
 import { Toast } from '@/components/feedback/Toast';
 import { WidgetHelpSheet } from '@/components/feedback/WidgetHelpSheet';
 import { FeedbackSheet } from '@/components/feedback/FeedbackSheet';
@@ -117,6 +118,7 @@ export default function Settings() {
                     }
                     const granted = await ensureNotificationPermission();
                     setNotifications({ enabled: granted });
+                    track('notifications_enabled', { source: 'settings', granted });
                     setToast(granted ? 'Daily reminder is on' : 'Allow notifications in your phone settings');
                   }}
                 />

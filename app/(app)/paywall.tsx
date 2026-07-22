@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -7,6 +7,7 @@ import { PressableScale } from 'pressto';
 import { Cta } from '@/components/onboarding/Cta';
 import { PlanPicker, type Plan } from '@/components/paywall/PlanPicker';
 import { haptics } from '@/lib/haptics';
+import { track } from '@/lib/analytics';
 import { purchasePlan, purchasesConfigured } from '@/lib/purchases';
 import { usePremiumPrices } from '@/hooks/usePremiumPrices';
 import { fonts } from '@/constants/theme';
@@ -25,6 +26,10 @@ export default function Paywall() {
   const [plan, setPlan] = useState<Plan>('annual');
   const [buying, setBuying] = useState(false);
   const { prices, trials } = usePremiumPrices();
+
+  useEffect(() => {
+    track('paywall_viewed', { source: 'app' });
+  }, []);
 
   const buy = async () => {
     if (buying) return;
