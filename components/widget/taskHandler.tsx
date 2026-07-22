@@ -6,8 +6,8 @@ import type { WidgetData } from './data';
 
 export function renderClearwayWidget(info: WidgetInfo, data: WidgetData) {
   const small = info.widgetName === 'ClearwaySmall';
-  const width = Math.max(info.width || 0, small ? 158 : 320);
-  const height = Math.max(info.height || 0, small ? 158 : 168);
+  const width = info.width || (small ? 158 : 320);
+  const height = info.height || (small ? 158 : 168);
   return small ? (
     <ClearwaySmallWidget data={data} width={width} height={height} />
   ) : (

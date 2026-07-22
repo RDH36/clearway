@@ -9,7 +9,7 @@ const ORIGINAL_SIZE_FN = `    private static int getWidgetSizeInDp(Context conte
         return AppWidgetManager.getInstance(context).getAppWidgetOptions(widgetId).getInt(key, 0);
     }`;
 
-const PATCHED_SIZE_FN = `    private static int getWidgetSizeInDp(Context context, int widgetId, String key) {
+const PREVIOUS_SIZE_FN = `    private static int getWidgetSizeInDp(Context context, int widgetId, String key) {
         int value = AppWidgetManager.getInstance(context).getAppWidgetOptions(widgetId).getInt(key, 0);
         if (value > 0) {
             return value;
@@ -26,16 +26,39 @@ const PATCHED_SIZE_FN = `    private static int getWidgetSizeInDp(Context contex
         return (int) Math.round(pxToDp(context, fallbackPx));
     }`;
 
+const PATCHED_SIZE_FN = `    private static int getWidgetSizeInDp(Context context, int widgetId, String key) {
+        int value = AppWidgetManager.getInstance(context).getAppWidgetOptions(widgetId).getInt(key, 0);
+        if (value > 0) {
+            return value;
+        }
+
+        AppWidgetProviderInfo providerInfo = AppWidgetManager.getInstance(context).getAppWidgetInfo(widgetId);
+        if (providerInfo == null) {
+            return 0;
+        }
+
+        boolean small = providerInfo.provider.getShortClassName().endsWith("ClearwaySmall");
+        boolean isWidth = AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH.equals(key)
+            || AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH.equals(key);
+        if (isWidth) {
+            return small ? 158 : 320;
+        }
+        return small ? 158 : 168;
+    }`;
+
 const layout = fs.readFileSync(layoutPath, 'utf8');
 fs.writeFileSync(layoutPath, layout.replace(/android:scaleType="matrix"/g, 'android:scaleType="fitXY"'));
 
-let util = fs.readFileSync(utilPath, 'utf8');
-if (!util.includes('AppWidgetProviderInfo providerInfo')) {
-  if (!util.includes(ORIGINAL_SIZE_FN)) {
+let util = fs.readFileSync(utilPath, 'utf8').replace(/\r\n/g, '\n');
+if (!util.includes('ClearwaySmall')) {
+  if (util.includes(PREVIOUS_SIZE_FN)) {
+    util = util.replace(PREVIOUS_SIZE_FN, PATCHED_SIZE_FN);
+  } else if (util.includes(ORIGINAL_SIZE_FN)) {
+    util = util.replace(ORIGINAL_SIZE_FN, PATCHED_SIZE_FN);
+  } else {
     console.error('[fix-android-widget] RNWidgetUtil.java has unexpected content — update scripts/fix-android-widget.js');
     process.exit(1);
   }
-  util = util.replace(ORIGINAL_SIZE_FN, PATCHED_SIZE_FN);
   fs.writeFileSync(utilPath, util);
 }
 

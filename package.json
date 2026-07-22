@@ -60,10 +60,7 @@
   "pnpm": {
     "onlyBuiltDependencies": [
       "@shopify/react-native-skia"
-    ],
-    "patchedDependencies": {
-      "react-native-android-widget": "patches/react-native-android-widget.patch"
-    }
+    ]
   },
   "private": true
 }
