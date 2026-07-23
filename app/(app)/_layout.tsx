@@ -1,6 +1,5 @@
 import { Redirect, Stack } from 'expo-router';
 import { useQuitStore } from '@/store/useQuitStore';
-import { useTheme } from '@/theme/ThemeProvider';
 
 /**
  * Main app stack (spec §4). On launch, if onboarding isn't done we send the user
@@ -8,7 +7,6 @@ import { useTheme } from '@/theme/ThemeProvider';
  */
 export default function AppLayout() {
   const onboardingComplete = useQuitStore((s) => s.onboardingComplete);
-  const { colors } = useTheme();
   if (!onboardingComplete) return <Redirect href="/onboarding/welcome" />;
 
   return (
@@ -17,7 +15,7 @@ export default function AppLayout() {
         headerShown: false,
         navigationBarTranslucent: true,
         navigationBarColor: 'transparent',
-        contentStyle: { backgroundColor: colors.base },
+        contentStyle: { backgroundColor: '#0E1B1F' },
       }}
     >
       <Stack.Screen name="index" />

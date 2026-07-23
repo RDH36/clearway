@@ -80,11 +80,18 @@ export default function Session() {
       <StatusBar style="light" />
       {phase === 'breathing' ? (
         <Animated.View entering={FadeIn.duration(500)} style={{ flex: 1 }}>
-          {isPremium ? (
-            <View style={{ position: 'absolute', top: 0, right: 0, zIndex: 2 }}>
-              <SoundToggle value={soundOn} onChange={setBreathSound} />
-            </View>
-          ) : null}
+          <View style={{ position: 'absolute', top: 0, right: 0, zIndex: 2 }}>
+            <SoundToggle
+              value={soundOn}
+              onChange={(next) => {
+                if (!isPremium) {
+                  router.push('/paywall');
+                  return;
+                }
+                setBreathSound(next);
+              }}
+            />
+          </View>
           <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 28 }}>
             <Text style={{ fontFamily: fonts.mono, fontSize: 11, letterSpacing: 2, color: '#7E9A9B', textTransform: 'uppercase' }}>
               {`${SLOT_LABEL[slot]} session · ${pattern.eyebrow}`}

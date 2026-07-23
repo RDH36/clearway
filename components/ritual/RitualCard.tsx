@@ -25,9 +25,9 @@ function Dot({ filled, frosted }: { filled: boolean; frosted?: boolean }) {
         width: 9,
         height: 9,
         borderRadius: 5,
-        backgroundColor: filled ? '#5BE0C6' : frosted ? 'rgba(159,180,179,0.14)' : 'rgba(91,224,198,0.18)',
+        backgroundColor: filled ? '#5BE0C6' : frosted ? 'rgba(159,180,179,0.14)' : 'transparent',
         borderWidth: 1,
-        borderColor: frosted ? 'rgba(159,180,179,0.35)' : 'rgba(91,224,198,0.5)',
+        borderColor: frosted ? 'rgba(159,180,179,0.35)' : 'rgba(91,224,198,0.6)',
       }}
     />
   );
@@ -57,7 +57,7 @@ export function RitualCard({ onStart, onUpgrade }: { onStart: (slot: SessionSlot
           <Text style={{ fontFamily: fonts.bodySemibold, fontSize: 14.5, color: '#EAF4F2' }}>
             {anchorDone
               ? 'Air claimed. Two more daily moments — Premium ✦'
-              : `Next session — ${displayTime(sessions[sessions.anchor])}`}
+              : `Anchor session — ${displayTime(sessions[sessions.anchor])}`}
           </Text>
         </View>
         <Text style={{ fontFamily: fonts.bodySemibold, fontSize: 13, color: '#5BE0C6' }}>
