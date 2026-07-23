@@ -16,6 +16,7 @@ import { Highlight } from '@/components/ui/Highlight';
 import { buildEmpathy, EMPATHY_PROGRESS } from '@/components/onboarding/content';
 import { useQuitStore } from '@/store/useQuitStore';
 import { haptics } from '@/lib/haptics';
+import { useOnboardingStepTracked } from '@/lib/analytics';
 import { fonts } from '@/constants/theme';
 
 function Spinner() {
@@ -36,6 +37,7 @@ function Spinner() {
 
 export default function Empathy() {
   const router = useRouter();
+  useOnboardingStepTracked('empathy');
   const vapingDuration = useQuitStore((s) => s.vapingDuration);
   const worstCravingTime = useQuitStore((s) => s.worstCravingTime);
   const quitFeeling = useQuitStore((s) => s.quitFeeling);

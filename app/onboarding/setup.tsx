@@ -8,7 +8,7 @@ import { pickAffirmation, reasonLabel } from '@/lib/affirmations';
 import { formatMoney } from '@/lib/format';
 import { sendWelcomeNotification } from '@/lib/notifications';
 import { haptics } from '@/lib/haptics';
-import { track } from '@/lib/analytics';
+import { track, useOnboardingStepTracked } from '@/lib/analytics';
 import { useWidgetPin } from '@/hooks/useWidgetPin';
 import { Shell } from '@/components/onboarding/Shell';
 import { Cta } from '@/components/onboarding/Cta';
@@ -48,6 +48,7 @@ function Skip({ label, onPress }: { label: string; onPress: () => void }) {
 
 export default function OnboardingSetup() {
   const router = useRouter();
+  useOnboardingStepTracked('setup');
   const setNotifications = useQuitStore((s) => s.setNotifications);
   const motivation = useQuitStore((s) => s.primaryMotivation);
   const weekly = useQuitStore((s) => s.weeklySpend);

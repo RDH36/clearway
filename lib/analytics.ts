@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import PostHog from 'posthog-react-native';
 
 const apiKey = process.env.EXPO_PUBLIC_POSTHOG_KEY ?? '';
@@ -17,4 +18,17 @@ posthog.register({ app: 'clearway' });
 
 export function track(event: string, properties?: Record<string, string | number | boolean | null>) {
   posthog.capture(event, properties);
+}
+
+const ONBOARDING_STEPS = ['welcome', 'quiz', 'empathy', 'solution', 'reasons', 'wow', 'setup', 'paywall'] as const;
+
+export type OnboardingStep = (typeof ONBOARDING_STEPS)[number];
+
+export function useOnboardingStepTracked(step: OnboardingStep) {
+  const tracked = useRef(false);
+  useEffect(() => {
+    if (tracked.current) return;
+    tracked.current = true;
+    track('onboarding_step_viewed', { step, step_index: ONBOARDING_STEPS.indexOf(step) });
+  }, [step]);
 }

@@ -15,7 +15,7 @@ import { ClearBurst } from '@/components/onboarding/ClearBurst';
 import { Orb } from '@/components/onboarding/Orb';
 import { SmokeCompare } from '@/components/home/SmokeCompare';
 import { useQuitStore } from '@/store/useQuitStore';
-import { track } from '@/lib/analytics';
+import { track, useOnboardingStepTracked } from '@/lib/analytics';
 import { useNow } from '@/hooks/useNow';
 import { msClean, formatClean } from '@/lib/time';
 import { projectedYear } from '@/lib/money';
@@ -46,6 +46,7 @@ function MoneyCountUp({ target }: { target: number }) {
 
 export default function Wow() {
   const router = useRouter();
+  useOnboardingStepTracked('wow');
   const startQuit = useQuitStore((s) => s.startQuit);
   const quit = useQuitStore((s) => s.quitTimestamp);
   const weekly = useQuitStore((s) => s.weeklySpend);

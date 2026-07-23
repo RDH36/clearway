@@ -8,10 +8,12 @@ import { QuizCard } from '@/components/onboarding/QuizCard';
 import { Orb } from '@/components/onboarding/Orb';
 import { QUESTIONS, quizProgress, type QuizOption } from '@/components/onboarding/content';
 import { useQuitStore } from '@/store/useQuitStore';
+import { track, useOnboardingStepTracked } from '@/lib/analytics';
 import { fonts } from '@/constants/theme';
 
 export default function Quiz() {
   const router = useRouter();
+  useOnboardingStepTracked('quiz');
   const setQuizAnswers = useQuitStore((s) => s.setQuizAnswers);
   const [index, setIndex] = useState(0);
   const [picks, setPicks] = useState<Record<number, string>>({});
@@ -25,6 +27,7 @@ export default function Quiz() {
     setLocked(true);
     setPicks((p) => ({ ...p, [index]: option.label }));
     setQuizAnswers(option.patch);
+    track('onboarding_quiz_answered', { question_index: index, question: question.id, answer: option.label });
     setTimeout(() => {
       if (index >= QUESTIONS.length - 1) router.push('/onboarding/empathy');
       else setIndex((i) => i + 1);

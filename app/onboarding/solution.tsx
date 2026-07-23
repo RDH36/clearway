@@ -7,6 +7,7 @@ import { Cta } from '@/components/onboarding/Cta';
 import { SOLUTION_PROGRESS, worstPhrase } from '@/components/onboarding/content';
 import { useQuitStore } from '@/store/useQuitStore';
 import { projectedYear } from '@/lib/money';
+import { useOnboardingStepTracked } from '@/lib/analytics';
 import { fonts } from '@/constants/theme';
 
 const ICON = { width: 24, height: 24, viewBox: '0 0 24 24', fill: 'none', stroke: '#5BE0C6', strokeWidth: 1.7, strokeLinecap: 'round' } as const;
@@ -64,6 +65,7 @@ function Tile({ icon, title, body, delay }: { icon: React.ReactNode; title: stri
 
 export default function Solution() {
   const router = useRouter();
+  useOnboardingStepTracked('solution');
   const weekly = useQuitStore((s) => s.weeklySpend);
   const worst = useQuitStore((s) => s.worstCravingTime);
   const money = `~$${projectedYear(weekly).toLocaleString('en-US')} back this year`;

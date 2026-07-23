@@ -8,7 +8,7 @@ import { useQuitStore } from '@/store/useQuitStore';
 import { useNow } from '@/hooks/useNow';
 import { msClean } from '@/lib/time';
 import { haptics } from '@/lib/haptics';
-import { track } from '@/lib/analytics';
+import { track, useOnboardingStepTracked } from '@/lib/analytics';
 import { purchasePlan, purchasesConfigured } from '@/lib/purchases';
 import { usePremiumPrices } from '@/hooks/usePremiumPrices';
 import { Cta } from '@/components/onboarding/Cta';
@@ -67,6 +67,7 @@ function TrialOfferSheet({ onAccept, onDecline }: { onAccept: () => void; onDecl
 
 export default function Paywall() {
   const router = useRouter();
+  useOnboardingStepTracked('paywall');
   const insets = useSafeAreaInsets();
   const setOnboardingComplete = useQuitStore((s) => s.setOnboardingComplete);
   const quit = useQuitStore((s) => s.quitTimestamp);

@@ -9,6 +9,7 @@ import { pickAffirmation } from '@/lib/affirmations';
 import { projectedYear } from '@/lib/money';
 import { formatMoney } from '@/lib/format';
 import { haptics } from '@/lib/haptics';
+import { useOnboardingStepTracked } from '@/lib/analytics';
 import { Shell } from '@/components/onboarding/Shell';
 import { Cta } from '@/components/onboarding/Cta';
 import { Highlight } from '@/components/ui/Highlight';
@@ -27,6 +28,7 @@ const MOTIVE_ECHO: Record<Motivation, string> = {
 
 export default function OnboardingReasons() {
   const router = useRouter();
+  useOnboardingStepTracked('reasons');
   const motivation = useQuitStore((s) => s.primaryMotivation);
   const weekly = useQuitStore((s) => s.weeklySpend);
   const addReason = useQuitStore((s) => s.addReason);

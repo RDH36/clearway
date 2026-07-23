@@ -5,11 +5,12 @@ import { Shell } from '@/components/onboarding/Shell';
 import { Cta } from '@/components/onboarding/Cta';
 import { Orb } from '@/components/onboarding/Orb';
 import { Highlight } from '@/components/ui/Highlight';
-import { track } from '@/lib/analytics';
+import { track, useOnboardingStepTracked } from '@/lib/analytics';
 import { fonts } from '@/constants/theme';
 
 export default function Welcome() {
   const router = useRouter();
+  useOnboardingStepTracked('welcome');
 
   return (
     <Shell>
