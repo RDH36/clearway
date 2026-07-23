@@ -42,9 +42,11 @@ export function RitualCard({ onStart, onUpgrade }: { onStart: (slot: SessionSlot
   const done = doneToday(sessionLog);
 
   if (!isPremium) {
-    const anchorDone = done.includes(sessions.anchor);
+    const claimed = done.length > 0;
+    const next = nextSession(sessions, done);
+    const startSlot = startableSlot(sessions, done);
     return (
-      <PressableScale onPress={anchorDone ? onUpgrade : () => onStart(sessions.anchor)} style={CARD}>
+      <PressableScale onPress={claimed ? onUpgrade : () => onStart(startSlot)} style={CARD}>
         <View style={{ flexDirection: 'row', gap: 5 }}>
           {SLOT_ORDER.map((slot) => (
             <Dot key={slot} filled={done.includes(slot)} frosted={slot !== sessions.anchor} />
@@ -52,16 +54,16 @@ export function RitualCard({ onStart, onUpgrade }: { onStart: (slot: SessionSlot
         </View>
         <View style={{ flex: 1, gap: 1 }}>
           <Text style={{ fontFamily: fonts.mono, fontSize: 9.5, letterSpacing: 1.5, color: '#5BE0C6', textTransform: 'uppercase' }}>
-            {`Your ritual · ${anchorDone ? 1 : 0}/1 today`}
+            {`Your ritual · ${claimed ? 1 : 0}/1 today`}
           </Text>
           <Text style={{ fontFamily: fonts.bodySemibold, fontSize: 14.5, color: '#EAF4F2' }}>
-            {anchorDone
+            {claimed
               ? 'Air claimed. Two more daily moments — Premium ✦'
-              : `Anchor session — ${displayTime(sessions[sessions.anchor])}`}
+              : `Next session — ${displayTime(next.time)}${next.tomorrow ? ' tomorrow' : ''}`}
           </Text>
         </View>
         <Text style={{ fontFamily: fonts.bodySemibold, fontSize: 13, color: '#5BE0C6' }}>
-          {anchorDone ? '✦' : 'Start →'}
+          {claimed ? '✦' : 'Start →'}
         </Text>
       </PressableScale>
     );
