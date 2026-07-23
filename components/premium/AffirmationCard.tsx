@@ -11,6 +11,7 @@ export function AffirmationCard({ ms }: { ms: number }) {
   const motivation = useQuitStore((s) => s.primaryMotivation);
   const weekly = useQuitStore((s) => s.weeklySpend);
   const firstReason = useQuitStore((s) => s.reasons[0]?.title);
+  const userName = useQuitStore((s) => s.userName);
   const { isPremium } = usePremium();
 
   const days = Math.max(1, Math.floor(ms / DAY_MS));
@@ -23,6 +24,7 @@ export function AffirmationCard({ ms }: { ms: number }) {
     reason: reasonLabel(firstReason, motivation),
     days,
     money: formatMoney(moneySaved(weekly, ms)),
+    name: userName,
   });
 
   return (

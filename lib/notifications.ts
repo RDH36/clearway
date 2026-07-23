@@ -35,13 +35,13 @@ export async function ensureNotificationPermission(): Promise<boolean> {
   return requested.granted;
 }
 
-export async function sendWelcomeNotification(reason: string): Promise<boolean> {
+export async function sendWelcomeNotification(reason: string, name?: string | null): Promise<boolean> {
   try {
     const granted = await ensureNotificationPermission();
     if (!granted) return false;
     await Notifications.scheduleNotificationAsync({
       content: {
-        title: "We're with you",
+        title: name ? `We're with you, ${name}` : "We're with you",
         body: `Day 1 starts now — for “${reason}.” One breath at a time.`,
       },
       trigger: { channelId: CHANNEL_ID },
@@ -58,6 +58,7 @@ export type EncouragementState = {
   primaryMotivation: Motivation;
   reasons: Reason[];
   notifications: NotificationPrefs;
+  userName: string | null;
 };
 
 let lastSyncKey = '';
@@ -91,6 +92,7 @@ export async function syncEncouragementSchedule(state: EncouragementState, isPre
       moment: 'general',
       seed: days,
       reason: reasonLabel(state.reasons[0]?.title, state.primaryMotivation),
+      name: state.userName,
       days,
       money: formatMoney(moneySaved(state.weeklySpend, msAtDelivery)),
     });

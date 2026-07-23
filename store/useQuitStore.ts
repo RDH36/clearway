@@ -28,20 +28,35 @@ export type NotificationPrefs = {
   streakNudgeOn: boolean;
 };
 
+export type SessionSlot = 'morning' | 'midday' | 'evening';
+
+export type SessionPlan = {
+  morning: string; // "HH:mm"
+  midday: string;
+  evening: string;
+  enabled: boolean;
+  anchor: SessionSlot;
+  defaultPattern: string;
+};
+
 export type QuitState = {
   // core
   quitTimestamp: number | null; // UTC ms; null until onboarding done
   longestStreakMs: number; // best run ever; survives resets
 
   // from onboarding quiz
+  userName: string | null;
   weeklySpend: number; // user's currency units
   currency: Currency;
   primaryMotivation: Motivation;
-  vapingDuration: string; // Q2 answer
-  usageFrequency: string; // Q3 answer
-  worstCravingTime: string; // Q5 answer
-  quitFeeling: string; // Q6 answer — how quitting feels right now
+  vapingDuration: string; // legacy Q2 answer (question removed)
+  usageFrequency: string;
+  worstCravingTime: string;
+  withoutIt: string; // what happens without it on you
+  triedBefore: string; // past quit attempts
+  quitFeeling: string; // how quitting feels right now
   reasons: Reason[];
+  sessions: SessionPlan;
 
   // app
   onboardingComplete: boolean;
@@ -72,6 +87,8 @@ export type QuitActions = {
   updateReason: (id: string, patch: Partial<Omit<Reason, 'id'>>) => void;
   removeReason: (id: string) => void;
   setNotifications: (patch: Partial<NotificationPrefs>) => void;
+  setUserName: (name: string | null) => void;
+  setSessions: (patch: Partial<SessionPlan>) => void;
   /** Accept the local 3-day trial (paywall dismiss offer). One-shot. */
   startTrial: () => void;
   setTrialEndSeen: (value: boolean) => void;
@@ -86,14 +103,25 @@ export type QuitActions = {
 const DEFAULT_STATE: QuitState = {
   quitTimestamp: null,
   longestStreakMs: 0,
+  userName: null,
   weeklySpend: 0,
   currency: 'USD',
   primaryMotivation: 'health',
   vapingDuration: '',
   usageFrequency: '',
   worstCravingTime: '',
+  withoutIt: '',
+  triedBefore: '',
   quitFeeling: '',
   reasons: [],
+  sessions: {
+    morning: '08:00',
+    midday: '13:00',
+    evening: '20:00',
+    enabled: false,
+    anchor: 'evening',
+    defaultPattern: 'calm478',
+  },
   onboardingComplete: false,
   themePref: 'system',
   breathSound: true,
@@ -149,6 +177,8 @@ export const useQuitStore = create<Store>()(
       removeReason: (id) => set((s) => ({ reasons: s.reasons.filter((r) => r.id !== id) })),
       setNotifications: (patch) =>
         set((s) => ({ notifications: { ...s.notifications, ...patch } })),
+      setUserName: (userName) => set({ userName }),
+      setSessions: (patch) => set((s) => ({ sessions: { ...s.sessions, ...patch } })),
       startTrial: () => {
         if (get().trialUsed) return;
         set({ trialStartedAt: Date.now(), trialUsed: true, trialEndSeen: false });

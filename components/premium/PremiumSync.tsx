@@ -13,6 +13,7 @@ export function PremiumSync() {
   const primaryMotivation = useQuitStore((s) => s.primaryMotivation);
   const reasons = useQuitStore((s) => s.reasons);
   const notifications = useQuitStore((s) => s.notifications);
+  const userName = useQuitStore((s) => s.userName);
 
   useEffect(() => {
     initNotifications();
@@ -22,11 +23,11 @@ export function PremiumSync() {
   useEffect(() => {
     posthog.register({ premium: isPremium });
     syncEncouragementSchedule(
-      { quitTimestamp, weeklySpend, primaryMotivation, reasons, notifications },
+      { quitTimestamp, weeklySpend, primaryMotivation, reasons, notifications, userName },
       isPremium
     );
     refreshWidget();
-  }, [isPremium, quitTimestamp, weeklySpend, primaryMotivation, reasons, notifications]);
+  }, [isPremium, quitTimestamp, weeklySpend, primaryMotivation, reasons, notifications, userName]);
 
   return null;
 }

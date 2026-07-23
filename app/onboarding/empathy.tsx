@@ -38,11 +38,12 @@ function Spinner() {
 export default function Empathy() {
   const router = useRouter();
   useOnboardingStepTracked('empathy');
-  const vapingDuration = useQuitStore((s) => s.vapingDuration);
+  const userName = useQuitStore((s) => s.userName);
+  const triedBefore = useQuitStore((s) => s.triedBefore);
   const worstCravingTime = useQuitStore((s) => s.worstCravingTime);
   const quitFeeling = useQuitStore((s) => s.quitFeeling);
   const [revealed, setRevealed] = useState(false);
-  const { mirror, feeling, proof } = buildEmpathy(vapingDuration, worstCravingTime, quitFeeling);
+  const { mirror, feeling, proof } = buildEmpathy(triedBefore, worstCravingTime, quitFeeling);
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -70,7 +71,7 @@ export default function Empathy() {
           entering={FadeInDown.duration(600)}
           style={{ fontFamily: fonts.mono, fontSize: 11, letterSpacing: 3, color: '#5BE0C6', textTransform: 'uppercase' }}
         >
-          {"Here's what we heard"}
+          {userName ? `${userName} — here's what we heard` : "Here's what we heard"}
         </Animated.Text>
         <Animated.Text
           entering={FadeInDown.delay(250).duration(700)}
@@ -94,7 +95,7 @@ export default function Empathy() {
         </Animated.View>
       </View>
       <Animated.View entering={FadeInDown.delay(feeling ? 2100 : 1500).duration(700)}>
-        <Cta label="See my plan →" onPress={() => router.replace('/onboarding/solution')} />
+        <Cta label="I feel seen →" onPress={() => router.replace('/onboarding/reasons')} />
       </Animated.View>
     </Shell>
   );

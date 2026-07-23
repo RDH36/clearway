@@ -15,7 +15,7 @@ import { Cta } from '@/components/onboarding/Cta';
 import { Highlight } from '@/components/ui/Highlight';
 import { fonts } from '@/constants/theme';
 
-const REASONS_PROGRESS = 0.97;
+const REASONS_PROGRESS = 0.78;
 
 const GLYPH: Record<Motivation, string> = { health: '✚', money: '$', control: '◎', someone: '♡' };
 
@@ -57,7 +57,7 @@ export default function OnboardingReasons() {
     }, 1100);
   };
 
-  const next = () => router.replace('/onboarding/wow');
+  const next = () => router.replace('/onboarding/solution');
 
   return (
     <Shell progress={REASONS_PROGRESS}>
@@ -70,7 +70,7 @@ export default function OnboardingReasons() {
       >
         <View style={{ gap: 9, paddingTop: 12 }}>
           <Text style={{ fontFamily: fonts.mono, fontSize: 11, letterSpacing: 2, color: '#7E9A9B', textTransform: 'uppercase' }}>
-            One last thing
+            {"Now that we know you"}
           </Text>
           <Text style={{ fontFamily: fonts.displaySemibold, fontSize: 27, lineHeight: 32, color: '#EAF4F2', letterSpacing: -0.4 }}>
             {MOTIVE_ECHO[motivation]}

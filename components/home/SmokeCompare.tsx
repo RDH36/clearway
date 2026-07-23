@@ -66,7 +66,7 @@ export const SmokeCompare = memo(function SmokeCompare({ weekly, onContinue }: {
       </View>
 
       <View style={{ position: 'absolute', left: 24, right: 24, bottom: insets.bottom + 24 }}>
-        <Cta label="See my plan →" onPress={onContinue} />
+        <Cta label="Try your first session →" onPress={onContinue} />
       </View>
     </View>
   );

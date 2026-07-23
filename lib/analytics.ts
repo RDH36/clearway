@@ -20,7 +20,7 @@ export function track(event: string, properties?: Record<string, string | number
   posthog.capture(event, properties);
 }
 
-const ONBOARDING_STEPS = ['welcome', 'quiz', 'empathy', 'solution', 'reasons', 'wow', 'setup', 'paywall'] as const;
+const ONBOARDING_STEPS = ['welcome', 'quiz', 'empathy', 'reasons', 'solution', 'wow', 'setup', 'paywall'] as const;
 
 export type OnboardingStep = (typeof ONBOARDING_STEPS)[number];
 

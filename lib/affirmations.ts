@@ -4,7 +4,7 @@ export type AffirmationMoment = 'early' | 'craving' | 'milestone' | 'general';
 
 export type Affirmation = { id: string; text: string };
 
-type Slots = { reason: string; days: number; money: string };
+type Slots = { reason: string; days: number; money: string; name?: string | null };
 
 const HEALTH: string[] = [
   'Day {days}. Your lungs are already clearing — {reason} is worth every breath.',
@@ -129,7 +129,8 @@ const fill = (text: string, slots: Slots) =>
   text
     .replaceAll('{reason}', slots.reason)
     .replaceAll('{days}', String(Math.max(1, slots.days)))
-    .replaceAll('{money}', slots.money);
+    .replaceAll('{money}', slots.money)
+    .replaceAll('{name}', slots.name ?? '');
 
 export function pickAffirmation(opts: {
   motivation: Motivation;
@@ -138,6 +139,7 @@ export function pickAffirmation(opts: {
   reason: string;
   days: number;
   money: string;
+  name?: string | null;
 }): Affirmation {
   const { motivation, moment, seed } = opts;
   let pool: string[];
@@ -156,7 +158,9 @@ export function pickAffirmation(opts: {
     key = motivation;
   }
   const index = Math.abs(Math.floor(seed)) % pool.length;
-  return { id: `${key}-${index}`, text: fill(pool[index], opts) };
+  const text = fill(pool[index], opts);
+  const named = opts.name && Math.abs(Math.floor(seed)) % 3 === 0 ? `${opts.name} — ${text}` : text;
+  return { id: `${key}-${index}`, text: named };
 }
 
 export const shouldShowFreeTaste = (days: number) => days % 3 === 0;

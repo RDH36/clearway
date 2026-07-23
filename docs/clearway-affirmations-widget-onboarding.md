@@ -88,39 +88,41 @@ Fond SVG (dégradé sombre + halos aqua/ambre, coins 30 px), typo Bricolage (chi
 
 ---
 
-## 3. Onboarding — contenu et processus
+## 3. Onboarding — contenu et processus (rework « ritual », juillet 2026)
 
 Flux linéaire de 8 écrans (`app/onboarding/`), navigation impérative écran → écran, **aucun retour arrière** (`gestureEnabled: false`, transitions `none`, paywall en modal `slide_from_bottom`). État persisté dans le store Zustand `useQuitStore` (AsyncStorage).
 
 **Gates** : `(app)/_layout.tsx` redirige vers `/onboarding/welcome` tant que `onboardingComplete` est `false` ; `onboarding/_layout.tsx` redirige vers `/` si déjà `true`. Le root layout attend l'hydratation du store avant de rendre (pas de flash).
 
-| # | Écran | Progress | Contenu | Sortie |
-|---|---|---|---|---|
-| 1 | `welcome` | (barre cachée) | Orb + « Clearway — The air clears from here », promesse *"No lectures. No shame."* | CTA **GET STARTED** → quiz |
-| 2 | `quiz` | 0.10 → 0.65 (`0.1 + i×0.11`) | **6 questions sur une seule route** (state local `index`), chaque option applique un `patch` au store + affiche un `echo` empathique 1,25 s avant d'avancer ; flèche retour intra-quiz | Dernière réponse → empathy |
-| 3 | `empathy` | 0.82 | Loader *"Reading your answers…"* 1,9 s puis miroir personnalisé (`buildEmpathy`) : durée de vape + pire moment + phrase selon le ressenti + preuve sociale | CTA **See my plan →** solution |
-| 4 | `solution` | 0.92 | « Your plan » : 3 tuiles — streak live, `~$X back this year` (projection annuelle), outil craving 90 s ciblé sur son pire moment | CTA **Build my plan →** reasons |
-| 5 | `reasons` | 0.97 | Saisie libre de **sa raison** (écho de la motivation du quiz) ; tissage 1,1 s puis **première affirmation** (pool early, personnalisée) ; skippable | **That's my why →** (ou Skip) → wow |
-| 6 | `wow` | (fond `cleared`) | Moment pivot : **I'm starting now** → `startQuit()` (timestamp), machine à étapes pre→pulse→counting→reward : compteur qui démarre en live, count-up de l'argent annuel, comparaison SmokeCompare | Continue → setup |
-| 7 | `setup` | (fond `cleared`) | « Live it 1-2-3 » : ① aperçu affirmation du matin ② **pin du widget** (`useWidgetPin`) ③ activation notifications (envoie une notif de bienvenue immédiate) ; chaque beat skippable | → paywall |
-| 8 | `paywall` | modal | Compteur qui tourne en header, PlanPicker (annual/monthly/lifetime) ; à la fermeture sans achat : offre **3 jours d'essai gratuit sans carte** (une seule fois, `trialUsed`) ; achat → RevenueCat | `TransitionLoader` → `onboardingComplete = true` → home |
+| # | Écran | Contenu | Sortie |
+|---|---|---|---|
+| 1 | `welcome` | Hero (« The air clears from here ») puis **beat prénom** : « What should we call you? », skippable → `userName` | GET STARTED → nom → quiz |
+| 2 | `quiz` | **7 questions, une route** — inputs variés : cartes (why, tried_before, without_it, feeling), **échelle d'intensité** (frequency), **slider $** avec projection annuelle sous le pouce + haptique (spend), **timeline de journée** (worst). À la réponse : la sélection **monte**, les autres options disparaissent, l'**écho** s'affiche dessous en grand (avance au tap, auto ~2,4 s). Échos « écoute » : chaque réponse apporte un reframe/une info, jamais un accusé. Prénom préfixé sur les échos des questions 2 et 5 | Dernière réponse → empathy |
+| 3 | `empathy` | Loader 1,9 s puis miroir : « {Ray —} here's what we heard » — `triedBefore` + pire moment + phrase du ressenti + preuve sociale (`buildEmpathy`) | **I feel seen →** reasons |
+| 4 | `reasons` | « Now that we know you » — saisie de **sa raison**, tissage, première affirmation personnalisée ; skippable | **Keep it close →** solution |
+| 5 | `solution` | **Révélation du plan — raisonnement seul, aucun horaire** : « Nights are when it hits you. We'll get ahead of it… », annonce du rituel (3 sessions/jour) + pattern dérivé, cadrage **anti-craving** (« It's the thing you reach for instead of the vape ») | **Start my streak →** wow |
+| 6 | `wow` | **Scène continue** : peak (I'm starting now → compteur live + count-up argent + haze) → **bridge** (« Your counter is running. The urge will come — this is what you'll use when it does. ») → intro casque → **vraie session 4-7-8 de 30 s** (pattern dérivé du quiz, cues sonores, skippable) → « That calm, {Ray} — it's yours now. » | **Set up my ritual →** setup |
+| 7 | `setup` | « Live it 1-2-3 » : ① **« That's one. Let's put three in your day. »** — 3 horaires dérivés (`buildSessionPlan`) éditables ±30 min, CTA **Schedule my ritual** → `sessions` (store, `enabled: true`) ② pin du widget ③ notifications « **we nudge you at your session times** » (+ notif de bienvenue nominative) | → paywall |
+| 8 | `paywall` | PlanPicker ; à la fermeture : offre essai 3 jours (une fois) ; achat → RevenueCat | `TransitionLoader` → home |
 
-### Données collectées par le quiz (`components/onboarding/content.ts`)
+### Le plan de sessions (`lib/sessionPlan.ts`)
 
-| Question (id) | Champ store | Options |
-|---|---|---|
-| `why` — What's pushing you to quit? | `primaryMotivation` | Health / Money / Control / Someone I care about |
-| `duration` — How long have you been vaping? | `vapingDuration` | <1 an / 1–2 / 3–5 / 5+ |
-| `frequency` — How often do you reach for it? | `usageFrequency` | A few times a day / Hourly / Constantly / Lost count |
-| `spend` — What do you spend a week? | `weeklySpend` (+`currency`) | ~$20 / ~$40 / ~$60 / $80+ (85) |
-| `worst` — When are cravings worst? | `worstCravingTime` | Mornings / After meals / Stress / Nights |
-| `feeling` — How does quitting feel? | `quitFeeling` | Scared / Ready / Tired of it / Not sure |
+Dérivation depuis le quiz — c'est le payoff, chaque réponse resurgit :
 
-Ces réponses alimentent **tout le reste** : l'empathie (écran 3), la projection d'argent (4, 6, widget), le ciblage du pire moment (4, craving), la motivation des pools d'affirmations (partout), et la personnalisation de la notif de bienvenue.
+| Réponse | Pilote |
+|---|---|
+| `worst` | L'ancre, placée **avant** la fenêtre à risque : Mornings→7:30 · After meals→13:00 · Stress→12:00+17:30 · Nights→21:00 (+ phrase de raisonnement nommée) |
+| `frequency` | Espacement : Constantly/lost count → resserré (9:00/13:30/19:30), sinon large (7:30/13:00/21:00) |
+| `without_it` | Pattern par défaut : panic→4-7-8 · irritable→Box · focus→Coherent 5·5 · find_one→4-7-8 |
+| `quitFeeling` | Ton du copy (rassurant scared/unsure, énergisant ready/tired) |
+| `spend` (slider) | Projection annuelle live + écho `$X a year` |
+| `triedBefore` | Miroir de l'écran empathy |
+
+Stocké dans `sessions: { morning, midday, evening, enabled, anchor, defaultPattern }` — la base de la Phase 2 (rituel quotidien).
 
 ### Tracking PostHog du funnel
 
-- `onboarding_step_viewed { step, step_index }` au mount de chaque écran (hook `useOnboardingStepTracked`, `lib/analytics.ts`)
-- `onboarding_quiz_answered { question_index, question, answer }` à chaque réponse
+- `onboarding_step_viewed { step, step_index }` — ordre : welcome, quiz, empathy, reasons, solution, wow, setup, paywall
+- `onboarding_quiz_answered { question_index, question, answer }` — ids : why, tried_before, frequency, spend, worst, without_it, feeling
 - Events ponctuels : `onboarding_started`, `quit_started` (wow), `notifications_enabled`, `widget_add_*`, `paywall_viewed`, `trial_started`, `onboarding_completed`
-- Funnel PostHog : insight [« Onboarding funnel — drop-off par phase »](https://us.posthog.com/project/119583/insights/rbScnf4e)
+- Funnel PostHog : insight [« Onboarding funnel — drop-off par phase »](https://us.posthog.com/project/119583/insights/rbScnf4e) (à réordonner : reasons avant solution, plus de step breathe)

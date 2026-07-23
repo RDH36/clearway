@@ -54,6 +54,7 @@ export async function buildWidgetData(): Promise<WidgetData> {
       reason,
       days: Math.max(1, days),
       money: formatMoney(moneySaved(state.weeklySpend ?? 0, Math.max(ms, DAY_MS))),
+      name: state.userName ?? null,
     }).text;
 
     if (state.quitTimestamp == null || days < 1) {

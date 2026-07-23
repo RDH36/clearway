@@ -72,6 +72,7 @@ export default function Craving() {
   const motivation = useQuitStore((s) => s.primaryMotivation);
   const weekly = useQuitStore((s) => s.weeklySpend);
   const firstReason = useQuitStore((s) => s.reasons[0]?.title);
+  const userName = useQuitStore((s) => s.userName);
   const { isPremium } = usePremium();
   const ms = msClean(quit, now);
   const smokeOn = useAfterTransition();
@@ -87,6 +88,7 @@ export default function Craving() {
         reason: reasonLabel(firstReason, motivation),
         days: Math.max(1, Math.floor(ms / DAY_MS)),
         money: formatMoney(moneySaved(weekly, ms)),
+        name: userName,
       })
     : null;
 

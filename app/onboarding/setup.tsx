@@ -1,10 +1,12 @@
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import Animated, { FadeInDown, FadeOutUp } from 'react-native-reanimated';
 import { PressableScale } from 'pressto';
-import { useQuitStore } from '@/store/useQuitStore';
-import { pickAffirmation, reasonLabel } from '@/lib/affirmations';
+import { useQuitStore, type SessionSlot } from '@/store/useQuitStore';
+import { reasonLabel } from '@/lib/affirmations';
+import { buildSessionPlan, shiftTime } from '@/lib/sessionPlan';
+import { SessionTimes } from '@/components/onboarding/inputs/SessionTimes';
 import { formatMoney } from '@/lib/format';
 import { sendWelcomeNotification } from '@/lib/notifications';
 import { haptics } from '@/lib/haptics';
@@ -16,7 +18,7 @@ import { Toast } from '@/components/feedback/Toast';
 import { Highlight } from '@/components/ui/Highlight';
 import { fonts } from '@/constants/theme';
 
-type Beat = 'affirmation' | 'widget' | 'notif';
+type Beat = 'ritual' | 'widget' | 'notif';
 
 const CARD = {
   borderRadius: 18,
@@ -27,13 +29,13 @@ const CARD = {
 } as const;
 
 const HEADLINE: Record<Beat, string> = {
-  affirmation: 'Every morning, we hand you back your why.',
+  ritual: "That's one. Let's put three in your day.",
   widget: 'Your progress, always in sight.',
-  notif: "And when it's hard — we show up.",
+  notif: "And at session time — we show up.",
 };
 
 const STEP: Record<Beat, string> = {
-  affirmation: 'Live it · 1 of 3',
+  ritual: 'Live it · 1 of 3',
   widget: 'Live it · 2 of 3',
   notif: 'Live it · 3 of 3',
 };
@@ -54,7 +56,23 @@ export default function OnboardingSetup() {
   const weekly = useQuitStore((s) => s.weeklySpend);
   const firstReason = useQuitStore((s) => s.reasons[0]?.title);
 
-  const [beat, setBeat] = useState<Beat>('affirmation');
+  const userName = useQuitStore((s) => s.userName);
+  const worstCravingTime = useQuitStore((s) => s.worstCravingTime);
+  const usageFrequency = useQuitStore((s) => s.usageFrequency);
+  const withoutIt = useQuitStore((s) => s.withoutIt);
+  const quitFeeling = useQuitStore((s) => s.quitFeeling);
+  const setSessions = useQuitStore((s) => s.setSessions);
+
+  const generated = useMemo(
+    () => buildSessionPlan({ worstCravingTime, usageFrequency, withoutIt, quitFeeling }),
+    [worstCravingTime, usageFrequency, withoutIt, quitFeeling]
+  );
+  const [times, setTimes] = useState<Record<SessionSlot, string>>({
+    morning: generated.plan.morning,
+    midday: generated.plan.midday,
+    evening: generated.plan.evening,
+  });
+  const [beat, setBeat] = useState<Beat>('ritual');
   const [toast, setToast] = useState<string | null>(null);
   const { status: pinStatus, request: requestWidgetPin } = useWidgetPin(() =>
     setToast('Widget added to your home screen')
@@ -63,14 +81,13 @@ export default function OnboardingSetup() {
 
   const reason = reasonLabel(firstReason, motivation);
   const dayMoney = formatMoney(weekly / 7);
-  const morning = pickAffirmation({ motivation, moment: 'general', seed: 6, reason, days: 1, money: dayMoney });
 
   const toPaywall = () => router.push('/onboarding/paywall');
 
   const enableNotifs = async () => {
     if (leavingRef.current) return;
     leavingRef.current = true;
-    const sent = await sendWelcomeNotification(reason);
+    const sent = await sendWelcomeNotification(reason, userName);
     setNotifications({ enabled: sent });
     track('notifications_enabled', { source: 'onboarding', granted: sent });
     if (sent) {
@@ -94,16 +111,15 @@ export default function OnboardingSetup() {
           </Text>
         </View>
 
-        {beat === 'affirmation' ? (
+        {beat === 'ritual' ? (
           <Animated.View entering={FadeInDown.duration(400)} exiting={FadeOutUp.duration(250)} style={{ gap: 14 }}>
-            <View style={[CARD, { flexDirection: 'row', gap: 11, borderColor: 'rgba(91,224,198,0.3)', backgroundColor: 'rgba(91,224,198,0.09)' }]}>
-              <Text style={{ fontSize: 15, color: '#5BE0C6', lineHeight: 19 }}>✦</Text>
-              <Text style={{ flex: 1, fontFamily: fonts.body, fontSize: 14.5, lineHeight: 21, color: '#EAF4F2' }}>
-                {morning.text}
-              </Text>
-            </View>
+            <SessionTimes
+              times={times}
+              anchor={generated.plan.anchor}
+              onShift={(slot, minutes) => setTimes((t) => ({ ...t, [slot]: shiftTime(t[slot], minutes) }))}
+            />
             <Highlight
-              text="**From your words.** A fresh one **every morning.**"
+              text="**Like the one you just did.** Placed to meet the craving **before it starts.**"
               style={{ fontFamily: fonts.body, fontSize: 14.5, lineHeight: 21, color: '#9FB4B3' }}
             />
           </Animated.View>
@@ -151,7 +167,7 @@ export default function OnboardingSetup() {
               </View>
             </View>
             <Highlight
-              text="**Once a day.** Never shame. Say yes — this one arrives **right now.**"
+              text="**We nudge you at your session times.** Never shame. Say yes — this one arrives **right now.**"
               style={{ fontFamily: fonts.body, fontSize: 14.5, lineHeight: 21, color: '#9FB4B3' }}
             />
           </Animated.View>
@@ -160,8 +176,14 @@ export default function OnboardingSetup() {
         <View style={{ flex: 1 }} />
 
         <View style={{ gap: 12 }}>
-          {beat === 'affirmation' ? (
-            <Cta label="Next →" onPress={() => setBeat('widget')} />
+          {beat === 'ritual' ? (
+            <Cta
+              label="Schedule my ritual →"
+              onPress={() => {
+                setSessions({ ...generated.plan, ...times, enabled: true });
+                setBeat('widget');
+              }}
+            />
           ) : beat === 'widget' ? (
             <>
               {pinStatus === 'added' ? (
