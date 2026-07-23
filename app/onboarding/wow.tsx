@@ -22,7 +22,7 @@ import { projectedYear } from '@/lib/money';
 import { haptics } from '@/lib/haptics';
 import { fonts } from '@/constants/theme';
 
-type Stage = 'pre' | 'pulse' | 'counting' | 'bridge' | 'intro' | 'session' | 'done';
+type Stage = 'pulse' | 'counting' | 'bridge' | 'intro' | 'session' | 'done';
 
 const SESSION_MS = 30000;
 const pad = (n: number) => String(n).padStart(2, '0');
@@ -66,9 +66,10 @@ export default function Wow() {
   const quitFeeling = useQuitStore((s) => s.quitFeeling);
   const now = useNow(250);
 
-  const [stage, setStage] = useState<Stage>('pre');
+  const [stage, setStage] = useState<Stage>('pulse');
   const [showMoney, setShowMoney] = useState(false);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const startedRef = useRef(false);
   const orb = useSharedValue(1);
 
   const pattern = patternById(
@@ -98,7 +99,9 @@ export default function Wow() {
     };
   }, [stage]);
 
-  const startNow = () => {
+  useEffect(() => {
+    if (startedRef.current) return;
+    startedRef.current = true;
     try {
       Presets.System.notificationSuccess();
     } catch (e) {
@@ -107,16 +110,15 @@ export default function Wow() {
 
     startQuit();
     track('quit_started');
-    setStage('pulse');
     orb.value = withSequence(withTiming(1.34, { duration: 220 }), withTiming(0.92, { duration: 300 }), withTiming(1, { duration: 340 }));
     timers.current.push(
-      setTimeout(() => setStage('counting'), 750),
-      setTimeout(() => setShowMoney(true), 1250),
-      setTimeout(() => setStage('bridge'), 3800),
-      setTimeout(() => setStage('intro'), 6600),
-      setTimeout(() => setStage('session'), 9600)
+      setTimeout(() => setStage('counting'), 900),
+      setTimeout(() => setShowMoney(true), 1400),
+      setTimeout(() => setStage('bridge'), 3900),
+      setTimeout(() => setStage('intro'), 6700),
+      setTimeout(() => setStage('session'), 9700)
     );
-  };
+  }, [startQuit, orb]);
 
   const toSetup = () => router.push('/onboarding/setup');
   const orbStyle = useAnimatedStyle(() => ({ transform: [{ scale: orb.value }] }));
@@ -124,30 +126,18 @@ export default function Wow() {
   const { days } = formatClean(ms);
   const sec = Math.floor(ms / 1000);
   const hms = `${pad(Math.floor(sec / 3600))} : ${pad(Math.floor((sec % 3600) / 60))} : ${pad(sec % 60)}`;
-  const showPre = stage === 'pre' || stage === 'pulse';
   const showCounter = stage === 'counting' || stage === 'bridge';
 
   return (
-    <Shell cleared={stage !== 'pre'}>
-      <ClearBurst play={stage !== 'pre'} />
+    <Shell cleared>
+      <ClearBurst play />
 
-      {showPre ? (
-        <Animated.View entering={FadeIn.duration(500)} style={{ flex: 1 }}>
-          <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 24 }}>
-            <Animated.View style={orbStyle}>
-              <Orb size={88} />
-            </Animated.View>
-            <Text style={{ fontFamily: fonts.displaySemibold, fontSize: 29, lineHeight: 33, color: '#EAF4F2', letterSpacing: -0.4, textAlign: 'center', maxWidth: 280, opacity: stage === 'pulse' ? 0 : 1 }}>
-              This is the moment the air starts to clear.
-            </Text>
-            <Text style={{ fontFamily: fonts.body, fontSize: 15, lineHeight: 23, color: '#AFC4C2', textAlign: 'center', maxWidth: 260, opacity: stage === 'pulse' ? 0 : 1 }}>
-              {"The second you tap, your streak begins — and it doesn't stop."}
-            </Text>
-          </View>
-          <View style={{ opacity: stage === 'pulse' ? 0 : 1 }}>
-            <Cta label="I'm starting now" onPress={startNow} />
-          </View>
-        </Animated.View>
+      {stage === 'pulse' ? (
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+          <Animated.View style={orbStyle}>
+            <Orb size={88} />
+          </Animated.View>
+        </View>
       ) : null}
 
       {showCounter ? (
