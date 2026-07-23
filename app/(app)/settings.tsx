@@ -124,20 +124,13 @@ export default function Settings() {
             />
             {sessions.enabled
               ? SLOT_ORDER.map((slot) => {
-                  const active = slot === sessions.anchor;
+                  const locked = !isPremium && slot !== sessions.anchor;
                   return (
                     <Row
                       key={slot}
                       label={`${SLOT_LABEL[slot]} session`}
-                      value={isPremium ? formatTime12(sessions[slot]) : `${active ? '✓ ' : ''}${formatTime12(sessions[slot])}`}
-                      onPress={() => {
-                        if (isPremium) {
-                          setRitualSlot(slot);
-                          return;
-                        }
-                        haptics.tap();
-                        setSessions({ anchor: slot });
-                      }}
+                      value={locked ? 'Premium ✦' : formatTime12(sessions[slot])}
+                      onPress={() => (locked ? router.push('/paywall') : setRitualSlot(slot))}
                     />
                   );
                 })
