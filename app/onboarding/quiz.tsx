@@ -59,9 +59,12 @@ export default function Quiz() {
     pickedRef.current = false;
     if (timer.current) clearTimeout(timer.current);
     timer.current = null;
+    if (index >= QUESTIONS.length - 1) {
+      router.push('/onboarding/empathy');
+      return;
+    }
     setPicked(null);
-    if (index >= QUESTIONS.length - 1) router.push('/onboarding/empathy');
-    else setIndex((i) => i + 1);
+    setIndex((i) => i + 1);
   };
 
   const answer = (patch: Partial<QuitState>, echoText: string, answerLabel: string) => {

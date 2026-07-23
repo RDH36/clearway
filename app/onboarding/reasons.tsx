@@ -90,6 +90,7 @@ export default function OnboardingReasons() {
             onChangeText={setText}
             placeholder="…my daughter. …running without wheezing. …me."
             placeholderTextColor="#5C7375"
+            autoFocus
             multiline
             maxLength={120}
             editable={affirmation === null}

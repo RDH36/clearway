@@ -10,6 +10,7 @@ import { haptics } from '@/lib/haptics';
 import { track } from '@/lib/analytics';
 import { purchasePlan, purchasesConfigured } from '@/lib/purchases';
 import { usePremiumPrices } from '@/hooks/usePremiumPrices';
+import { LegalLinks } from '@/components/paywall/LegalLinks';
 import { fonts } from '@/constants/theme';
 
 const PERKS = [
@@ -99,6 +100,7 @@ export default function Paywall() {
           <Text style={{ fontFamily: fonts.body, fontSize: 12, color: '#7E9A9B', textAlign: 'center' }}>
             {trials[plan] ? `Free for 7 days, then ${prices[plan]} · Cancel anytime` : 'Cancel anytime · Secured by Google Play'}
           </Text>
+          <LegalLinks />
         </View>
       </ScrollView>
     </View>

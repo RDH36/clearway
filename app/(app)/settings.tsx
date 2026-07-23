@@ -27,8 +27,9 @@ import { ReminderTimeSheet, SessionTimeSheet, formatTime12 } from '@/components/
 import { SLOT_LABEL, SLOT_ORDER } from '@/lib/ritual';
 import type { SessionSlot } from '@/store/useQuitStore';
 import { ConfirmDeleteSheet } from '@/components/settings/sheets/ConfirmDeleteSheet';
+import { CreditsSheet } from '@/components/settings/sheets/CreditsSheet';
 
-type Sheet = 'date' | 'cost' | 'frequency' | 'time' | 'delete' | 'feedback' | null;
+type Sheet = 'date' | 'cost' | 'frequency' | 'time' | 'delete' | 'feedback' | 'credits' | null;
 
 function Section({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -179,6 +180,7 @@ export default function Settings() {
           <Section label="About">
             <Row label="Privacy policy" onPress={() => Linking.openURL(PRIVACY_URL)} />
             <Row label="Terms of service" onPress={() => Linking.openURL(TERMS_URL)} />
+            <Row label="Audio credits" onPress={() => setSheet('credits')} />
             <Row
               label="Version"
               right={<Text style={{ fontFamily: fonts.mono, fontSize: 13, color: colors.muted }}>{version}</Text>}
@@ -196,6 +198,7 @@ export default function Settings() {
       {ritualSlot ? <SessionTimeSheet slot={ritualSlot} onClose={() => setRitualSlot(null)} /> : null}
       {sheet === 'delete' ? <ConfirmDeleteSheet onClose={() => setSheet(null)} /> : null}
       {sheet === 'feedback' ? <FeedbackSheet onClose={() => setSheet(null)} /> : null}
+      {sheet === 'credits' ? <CreditsSheet onClose={() => setSheet(null)} /> : null}
       {pinStatus === 'help' ? <WidgetHelpSheet onClose={dismissHelp} /> : null}
       <Toast message={toast} onHide={() => setToast(null)} />
     </View>

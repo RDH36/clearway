@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
+import Purchases from 'react-native-purchases';
+import { purchasesConfigured } from '@/lib/purchases';
 import { Linking, ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -40,6 +42,7 @@ export default function Subscription() {
     if (viewTracked.current) return;
     viewTracked.current = true;
     track('subscription_viewed', { status: entitled ? 'premium' : trialActive ? 'trial' : 'free' });
+    if (purchasesConfigured()) Purchases.invalidateCustomerInfoCache().catch(() => {});
   }, [entitled, trialActive]);
 
   const lifetime = entitled && (entitlement?.expirationDate == null || planLabel(entitlement.productIdentifier) === 'Lifetime');

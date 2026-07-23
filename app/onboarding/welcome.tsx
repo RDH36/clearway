@@ -49,6 +49,7 @@ export default function Welcome() {
               placeholder="Your name"
               placeholderTextColor="#5C7375"
               maxLength={24}
+              autoFocus
               autoCapitalize="words"
               returnKeyType="done"
               onSubmitEditing={() => toQuiz(name)}

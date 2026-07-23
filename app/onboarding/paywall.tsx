@@ -14,6 +14,7 @@ import { usePremiumPrices } from '@/hooks/usePremiumPrices';
 import { Cta } from '@/components/onboarding/Cta';
 import { Highlight } from '@/components/ui/Highlight';
 import { PlanPicker, type Plan } from '@/components/paywall/PlanPicker';
+import { LegalLinks } from '@/components/paywall/LegalLinks';
 import { TransitionLoader } from '@/components/splash/TransitionLoader';
 import { fonts } from '@/constants/theme';
 
@@ -58,6 +59,7 @@ function TrialOfferSheet({ onAccept, onDecline }: { onAccept: () => void; onDecl
             <PressableScale onPress={onDecline} style={{ height: 48, alignItems: 'center', justifyContent: 'center' }}>
               <Text style={{ fontFamily: fonts.bodySemibold, fontSize: 15, color: '#9FB4B3' }}>No thanks</Text>
             </PressableScale>
+            <LegalLinks />
           </View>
         </Animated.View>
       </View>
@@ -181,6 +183,7 @@ export default function Paywall() {
         <Text style={{ fontFamily: fonts.body, fontSize: 12, color: '#7E9A9B', textAlign: 'center' }}>
           {trials[plan] ? `Free for 7 days, then ${prices[plan]} · Cancel anytime` : 'Cancel anytime · Secured by Google Play'}
         </Text>
+        <LegalLinks />
       </View>
 
       {offering ? <TrialOfferSheet onAccept={acceptTrial} onDecline={() => { setOffering(false); finish(); }} /> : null}
