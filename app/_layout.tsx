@@ -55,7 +55,14 @@ export default function RootLayout() {
   return (
     <AppProviders>
       <ThemedStatusBar />
-      <Stack screenOptions={{ headerShown: false, navigationBarTranslucent: true, navigationBarColor: 'transparent' }}>
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          navigationBarTranslucent: true,
+          navigationBarColor: 'transparent',
+          contentStyle: { backgroundColor: '#0E1B1F' },
+        }}
+      >
         <Stack.Screen name="(app)" />
         <Stack.Screen name="onboarding" options={{ gestureEnabled: false }} />
         {/* TEMP (Step 2 sanity) — remove with app/debug.tsx */}
