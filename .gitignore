@@ -24,3 +24,7 @@ expo-env.d.ts
 clearway-design-brief/
 modules/*/android/build/
 .env
+
+# Local AAB/APK builds
+/build
+*.aab
