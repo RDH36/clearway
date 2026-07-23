@@ -16,6 +16,25 @@ export const SLOT_LABEL: Record<SessionSlot, string> = {
 };
 
 const sessionNotifId = (slot: SessionSlot) => `clearway-session-${slot}`;
+const RITUAL_DATA_TYPE = 'ritual_session';
+
+// On Android, expo-notifications does not always honor a custom `identifier`
+// for repeating triggers (stored under an auto-generated UUID instead), so an
+// identifier-based cancel can match nothing and leave duplicates behind on
+// every reschedule. Enumerate and match on data.type + identifier prefix.
+async function cancelRitualNotifications() {
+  const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+  for (const req of scheduled) {
+    const data = req.content?.data as { type?: string } | null | undefined;
+    if (data?.type === RITUAL_DATA_TYPE || req.identifier.startsWith('clearway-session-')) {
+      try {
+        await Notifications.cancelScheduledNotificationAsync(req.identifier);
+      } catch {
+        continue;
+      }
+    }
+  }
+}
 
 export const todayKey = () => {
   const d = new Date();
@@ -73,9 +92,7 @@ export async function syncRitualSchedule(state: RitualState) {
     if (key === lastSyncKey) return;
     lastSyncKey = key;
 
-    for (const slot of SLOT_ORDER) {
-      await Notifications.cancelScheduledNotificationAsync(sessionNotifId(slot));
-    }
+    await cancelRitualNotifications();
     if (!enabled) return;
     const { granted } = await Notifications.getPermissionsAsync();
     if (!granted) return;
@@ -102,6 +119,7 @@ export async function syncRitualSchedule(state: RitualState) {
         content: {
           title: state.userName ? `${state.userName} — ${SLOT_LABEL[slot].toLowerCase()} session ✦` : `${SLOT_LABEL[slot]} session ✦`,
           body: affirmation.text,
+          data: { type: RITUAL_DATA_TYPE, slot },
         },
         trigger: {
           type: Notifications.SchedulableTriggerInputTypes.DAILY,
