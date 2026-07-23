@@ -123,14 +123,24 @@ export default function Settings() {
               }
             />
             {sessions.enabled
-              ? SLOT_ORDER.map((slot) => (
-                  <Row
-                    key={slot}
-                    label={`${SLOT_LABEL[slot]} session`}
-                    value={formatTime12(sessions[slot])}
-                    onPress={() => setRitualSlot(slot)}
-                  />
-                ))
+              ? SLOT_ORDER.map((slot) => {
+                  const active = slot === sessions.anchor;
+                  return (
+                    <Row
+                      key={slot}
+                      label={`${SLOT_LABEL[slot]} session`}
+                      value={isPremium ? formatTime12(sessions[slot]) : `${active ? '✓ ' : ''}${formatTime12(sessions[slot])}`}
+                      onPress={() => {
+                        if (isPremium) {
+                          setRitualSlot(slot);
+                          return;
+                        }
+                        haptics.tap();
+                        setSessions({ anchor: slot });
+                      }}
+                    />
+                  );
+                })
               : null}
           </Section>
 

@@ -14,6 +14,8 @@ import { LegalLinks } from '@/components/paywall/LegalLinks';
 import { fonts } from '@/constants/theme';
 
 const PERKS = [
+  'All 3 daily sessions — morning, midday, evening',
+  'Session sound: guiding voice + ambient music',
   'Daily affirmations built on your reasons',
   'The evolving home-screen widget',
   'Full craving kit — extra patterns + sounds',

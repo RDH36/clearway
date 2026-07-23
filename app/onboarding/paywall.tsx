@@ -157,7 +157,7 @@ export default function Paywall() {
         </View>
 
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', rowGap: 7 }}>
-          {['Counter running', 'Your why saved', 'Widget in place', 'Daily support on'].map((item) => (
+          {['3 daily sessions on', 'Session sound on', 'Counter running', 'Your why saved', 'Widget in place', 'Daily support on'].map((item) => (
             <View key={item} style={{ width: '50%', flexDirection: 'row', alignItems: 'center', gap: 7 }}>
               <Text style={{ fontSize: 11, color: '#5BE0C6' }}>✓</Text>
               <Text style={{ fontFamily: fonts.bodyMedium, fontSize: 12.5, color: '#C7D6D4' }}>{item}</Text>
