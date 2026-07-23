@@ -12,6 +12,7 @@ import { BreathingOrb } from '@/components/craving/BreathingOrb';
 import { useBreathPhase } from '@/hooks/useBreathPhase';
 import { patternById, type PatternId } from '@/lib/breathing';
 import { primeBreathCue } from '@/lib/sound';
+import { playAmbient, stopAmbient } from '@/lib/ambient';
 import { useQuitStore } from '@/store/useQuitStore';
 import { buildSessionPlan } from '@/lib/sessionPlan';
 import { track, useOnboardingStepTracked } from '@/lib/analytics';
@@ -82,12 +83,19 @@ export default function Wow() {
   }, []);
 
   useEffect(() => {
-    if (stage !== 'session') return;
+    if (stage !== 'session') {
+      stopAmbient();
+      return;
+    }
+    playAmbient();
     const t = setTimeout(() => {
       haptics.milestone();
       setStage('done');
     }, SESSION_MS);
-    return () => clearTimeout(t);
+    return () => {
+      clearTimeout(t);
+      stopAmbient();
+    };
   }, [stage]);
 
   const startNow = () => {

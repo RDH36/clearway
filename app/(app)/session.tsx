@@ -11,6 +11,9 @@ import { useBreathPhase } from '@/hooks/useBreathPhase';
 import { usePremium } from '@/hooks/usePremium';
 import { patternById, type PatternId } from '@/lib/breathing';
 import { primeBreathCue } from '@/lib/sound';
+import { playAmbient, stopAmbient } from '@/lib/ambient';
+import { SoundToggle } from '@/components/craving/SoundToggle';
+import { useScreenFocused } from '@/hooks/useScreenFocused';
 import { SLOT_LABEL, doneToday } from '@/lib/ritual';
 import { useQuitStore, type SessionSlot } from '@/store/useQuitStore';
 import { track } from '@/lib/analytics';
@@ -27,15 +30,25 @@ export default function Session() {
 
   const defaultPattern = useQuitStore((s) => s.sessions.defaultPattern);
   const breathSound = useQuitStore((s) => s.breathSound);
+  const setBreathSound = useQuitStore((s) => s.setBreathSound);
   const markSessionDone = useQuitStore((s) => s.markSessionDone);
   const sessionLog = useQuitStore((s) => s.sessionLog);
   const userName = useQuitStore((s) => s.userName);
   const { isPremium } = usePremium();
+  const focused = useScreenFocused();
 
-  const pattern = patternById(defaultPattern as PatternId);
+  const derived = patternById(defaultPattern as PatternId);
+  const pattern = isPremium || !derived.premium ? derived : patternById('calm478');
+  const soundOn = breathSound && isPremium;
   const [phase, setPhase] = useState<'breathing' | 'done'>('breathing');
-  const breath = useBreathPhase(breathSound && isPremium, phase === 'breathing', pattern);
+  const breath = useBreathPhase(soundOn, phase === 'breathing', pattern);
   const startedRef = useRef(false);
+
+  useEffect(() => {
+    if (focused && phase === 'breathing' && soundOn) playAmbient();
+    else stopAmbient();
+    return () => stopAmbient();
+  }, [focused, phase, soundOn]);
 
   useEffect(() => {
     if (startedRef.current) return;
@@ -67,6 +80,11 @@ export default function Session() {
       <StatusBar style="light" />
       {phase === 'breathing' ? (
         <Animated.View entering={FadeIn.duration(500)} style={{ flex: 1 }}>
+          {isPremium ? (
+            <View style={{ position: 'absolute', top: 0, right: 0, zIndex: 2 }}>
+              <SoundToggle value={soundOn} onChange={setBreathSound} />
+            </View>
+          ) : null}
           <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 28 }}>
             <Text style={{ fontFamily: fonts.mono, fontSize: 11, letterSpacing: 2, color: '#7E9A9B', textTransform: 'uppercase' }}>
               {`${SLOT_LABEL[slot]} session · ${pattern.eyebrow}`}
@@ -95,6 +113,24 @@ export default function Session() {
             <Text style={{ fontFamily: fonts.body, fontSize: 15, lineHeight: 23, color: '#9FB4B3' }}>
               {"Ninety seconds that belonged to you, not the vape. See you at the next one."}
             </Text>
+            {!isPremium ? (
+              <PressableScale
+                onPress={() => router.push('/paywall')}
+                style={{
+                  marginTop: 6,
+                  paddingVertical: 12,
+                  paddingHorizontal: 15,
+                  borderRadius: 14,
+                  borderWidth: 1,
+                  borderColor: 'rgba(159,180,179,0.28)',
+                  backgroundColor: 'rgba(159,180,179,0.08)',
+                }}
+              >
+                <Text style={{ fontFamily: fonts.body, fontSize: 13.5, lineHeight: 19, color: '#AFC4C2' }}>
+                  {'✦ Sound, Box breathing and two more daily moments — waiting in Premium.'}
+                </Text>
+              </PressableScale>
+            ) : null}
           </View>
           <Cta label="Back to clear air →" onPress={() => router.back()} />
         </Animated.View>

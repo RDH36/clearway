@@ -121,7 +121,7 @@ export default function Home() {
         <HeroCounter quit={quit} statusCopy={statusFor(ms)} />
 
         <View style={{ gap: 12 }}>
-          <RitualCard onStart={(slot) => go(`/session?slot=${slot}`)} />
+          <RitualCard onStart={(slot) => go(`/session?slot=${slot}`)} onUpgrade={() => go('/paywall')} />
           <AffirmationCard ms={ms} />
           <WhyCard reason={reason} onPress={() => go('/reasons')} />
 

@@ -83,11 +83,12 @@ export type RitualState = {
 
 let lastSyncKey = '';
 
-export async function syncRitualSchedule(state: RitualState) {
+export async function syncRitualSchedule(state: RitualState, isPremium: boolean) {
   try {
     const enabled = state.sessions.enabled && state.notifications.enabled;
+    const slots = isPremium ? SLOT_ORDER : [state.sessions.anchor];
     const key = enabled
-      ? `${state.sessions.morning}|${state.sessions.midday}|${state.sessions.evening}|${state.userName ?? ''}|${state.primaryMotivation}|${state.reasons[0]?.title ?? ''}`
+      ? `${slots.map((s) => state.sessions[s]).join('|')}|${slots.length}|${state.userName ?? ''}|${state.primaryMotivation}|${state.reasons[0]?.title ?? ''}`
       : 'off';
     if (key === lastSyncKey) return;
     lastSyncKey = key;
@@ -102,8 +103,8 @@ export async function syncRitualSchedule(state: RitualState) {
     const reason = reasonLabel(state.reasons[0]?.title, state.primaryMotivation);
     const money = formatMoney(moneySaved(state.weeklySpend, Math.max(ms, DAY_MS)));
 
-    for (let i = 0; i < SLOT_ORDER.length; i++) {
-      const slot = SLOT_ORDER[i];
+    for (let i = 0; i < slots.length; i++) {
+      const slot = slots[i];
       const [hour, minute] = state.sessions[slot].split(':').map(Number);
       const affirmation = pickAffirmation({
         motivation: state.primaryMotivation,

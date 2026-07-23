@@ -28,7 +28,7 @@ export function PremiumSync() {
       { quitTimestamp, weeklySpend, primaryMotivation, reasons, notifications, userName },
       isPremium
     );
-    syncRitualSchedule({ sessions, notifications, userName, primaryMotivation, reasons, weeklySpend, quitTimestamp });
+    syncRitualSchedule({ sessions, notifications, userName, primaryMotivation, reasons, weeklySpend, quitTimestamp }, isPremium);
     refreshWidget();
   }, [isPremium, quitTimestamp, weeklySpend, primaryMotivation, reasons, notifications, userName, sessions]);
 
