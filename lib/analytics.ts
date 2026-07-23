@@ -17,7 +17,7 @@ export const posthog = new PostHog(configured ? apiKey : 'phc_disabled', {
 posthog.register({ app: 'clearway' });
 
 export function track(event: string, properties?: Record<string, string | number | boolean | null>) {
-  posthog.capture(event, properties);
+  posthog.capture(`clearway_${event}`, properties);
 }
 
 const ONBOARDING_STEPS = ['welcome', 'quiz', 'empathy', 'reasons', 'solution', 'wow', 'setup', 'paywall'] as const;

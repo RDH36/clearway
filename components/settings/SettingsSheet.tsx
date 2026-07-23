@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useReanimatedKeyboardAnimation } from 'react-native-keyboard-controller';
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { PressableScale } from 'pressto';
 import { fonts } from '@/constants/theme';
@@ -20,6 +21,7 @@ export function SettingsSheet({
 }) {
   const { name, colors } = useTheme();
   const insets = useSafeAreaInsets();
+  const keyboard = useReanimatedKeyboardAnimation();
   const [closing, setClosing] = useState(false);
 
   const p = useSharedValue(0);
@@ -37,8 +39,13 @@ export function SettingsSheet({
     }, 230);
   };
 
+  const kbCompensation = insets.bottom + 24;
   const backdropStyle = useAnimatedStyle(() => ({ opacity: p.value }));
-  const sheetStyle = useAnimatedStyle(() => ({ transform: [{ translateY: (1 - p.value) * 620 }] }));
+  const sheetStyle = useAnimatedStyle(() => {
+    const lift =
+      keyboard.height.value < 0 ? Math.min(0, keyboard.height.value + kbCompensation) : 0;
+    return { transform: [{ translateY: (1 - p.value) * 620 + lift }] };
+  });
 
   const dark = name === 'dark';
   return (
