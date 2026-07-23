@@ -26,7 +26,6 @@ export type NotificationPrefs = {
   dailyTime: string; // "HH:mm"
   milestonesOn: boolean;
   streakNudgeOn: boolean;
-  supportBar: boolean; // premium: persistent lock-screen affirmation
 };
 
 export type QuitState = {
@@ -107,7 +106,6 @@ const DEFAULT_STATE: QuitState = {
     dailyTime: '09:00',
     milestonesOn: true,
     streakNudgeOn: true,
-    supportBar: true,
   },
   hasRequestedReview: false,
 };
@@ -174,8 +172,6 @@ export const useQuitStore = create<Store>()(
             trialUsed: false,
             trialEndSeen: false,
           };
-        if (version < 4 && state.notifications)
-          state = { ...state, notifications: { ...state.notifications, supportBar: true } };
         if (version < 5) {
           const { premiumCached, ...rest } = state;
           state = { ...rest, entitledCached: false };

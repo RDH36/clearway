@@ -13,7 +13,7 @@ import { BackIcon } from '@/components/progress/icons';
 import { Group, Row, SectionLabel, withAlpha } from '@/components/settings/SettingsGroup';
 import { Toggle } from '@/components/settings/Toggle';
 import { AppearanceRow } from '@/components/settings/AppearanceRow';
-import { PRIVACY_URL, TERMS_URL, rateApp, restorePurchases, shareApp } from '@/components/settings/actions';
+import { PRIVACY_URL, TERMS_URL, rateApp, shareApp } from '@/components/settings/actions';
 import { useWidgetPin } from '@/hooks/useWidgetPin';
 import { ensureNotificationPermission } from '@/lib/notifications';
 import { haptics } from '@/lib/haptics';
@@ -127,23 +127,6 @@ export default function Settings() {
             {notifications.enabled ? (
               <Row label="Daily reminder" value={formatTime12(notifications.dailyTime)} onPress={() => setSheet('time')} />
             ) : null}
-            <Row
-              label="Lock-screen support"
-              value={isPremium ? undefined : 'Premium'}
-              right={
-                <Toggle
-                  value={isPremium && notifications.supportBar}
-                  onChange={async (supportBar) => {
-                    if (!isPremium) {
-                      router.push('/paywall');
-                      return;
-                    }
-                    if (supportBar) await ensureNotificationPermission();
-                    setNotifications({ supportBar });
-                  }}
-                />
-              }
-            />
             {Platform.OS === 'android' ? (
               <Row label="Add widget to home screen" onPress={requestWidgetPin} />
             ) : null}
@@ -155,7 +138,6 @@ export default function Settings() {
               value={isPremium ? 'Premium' : 'Free'}
               onPress={() => router.push('/subscription')}
             />
-            <Row label="Restore purchases" onPress={() => restorePurchases()} />
           </Section>
 
           <Section label="Support">

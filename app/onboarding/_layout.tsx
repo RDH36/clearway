@@ -16,6 +16,7 @@ export default function OnboardingLayout() {
           animation: 'none',
           navigationBarTranslucent: true,
           navigationBarColor: 'transparent',
+          contentStyle: { backgroundColor: '#0B181C' },
         }}
       >
         <Stack.Screen name="welcome" />
