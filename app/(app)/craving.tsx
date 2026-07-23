@@ -31,6 +31,7 @@ import { msClean } from '@/lib/time';
 import { track } from '@/lib/analytics';
 import { clarity } from '@/lib/atmosphere';
 import { primeBreathCue } from '@/lib/sound';
+import { playAmbient, stopAmbient } from '@/lib/ambient';
 import { patternById, type PatternId } from '@/lib/breathing';
 import { pickAffirmation, reasonLabel } from '@/lib/affirmations';
 import { formatMoney } from '@/lib/format';
@@ -78,7 +79,14 @@ export default function Craving() {
   const smokeOn = useAfterTransition();
   const [patternId, setPatternId] = useState<PatternId>('calm478');
   const pattern = patternById(patternId);
-  const breath = useBreathPhase(breathSound && isPremium, true, pattern);
+  const soundOn = breathSound && isPremium;
+  const breath = useBreathPhase(soundOn, true, pattern);
+
+  useEffect(() => {
+    if (smokeOn && soundOn) playAmbient();
+    else stopAmbient();
+    return () => stopAmbient();
+  }, [smokeOn, soundOn]);
 
   const affirmation = isPremium
     ? pickAffirmation({

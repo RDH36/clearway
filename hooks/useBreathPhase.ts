@@ -37,7 +37,7 @@ export function useBreathPhase(sound = false, active = true, pattern: BreathPatt
     const id = setInterval(() => {
       const next = viewAt(Date.now() - start.current, pattern);
       if (soundRef.current && prevPhase.current !== null && prevPhase.current !== next.phase) {
-        playBreathCue();
+        playBreathCue(next.phase);
       }
       prevPhase.current = next.phase;
       setView((prev) =>

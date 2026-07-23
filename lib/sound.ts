@@ -1,32 +1,33 @@
-/**
- * Breathing cue sound — a soft bell chime played on each 4-7-8 phase change
- * (craving screen), replacing the haptic. One reused player, guarded so a build
- * without the native audio module simply no-ops instead of throwing.
- */
 import { createAudioPlayer, setAudioModeAsync, type AudioPlayer } from 'expo-audio';
+import type { BreathPhase } from '@/lib/breathing';
 
-let cue: AudioPlayer | null = null;
+const SOURCES: Record<BreathPhase, number> = {
+  inhale: require('../assets/audio/voice-in.mp3'),
+  hold: require('../assets/audio/voice-hold.mp3'),
+  exhale: require('../assets/audio/voice-out.mp3'),
+};
 
-function ensure(): AudioPlayer | null {
-  if (cue) return cue;
+const players: Partial<Record<BreathPhase, AudioPlayer>> = {};
+
+function ensure(phase: BreathPhase): AudioPlayer | null {
+  if (players[phase]) return players[phase] ?? null;
   try {
-    cue = createAudioPlayer(require('../assets/audio/breath-cue.mp3'));
-    cue.volume = 0.7;
+    const p = createAudioPlayer(SOURCES[phase]);
+    p.volume = 0.85;
+    players[phase] = p;
     setAudioModeAsync({ playsInSilentMode: true });
   } catch (e) {
     console.warn('[sound] init failed — native module not in this build; rebuild with `expo run:android`. →', e);
   }
-  return cue;
+  return players[phase] ?? null;
 }
 
-/** Warm the player so the first cue has no load delay. */
 export function primeBreathCue() {
-  ensure();
+  (['inhale', 'hold', 'exhale'] as BreathPhase[]).forEach(ensure);
 }
 
-/** Play the phase-change cue from the start. */
-export function playBreathCue() {
-  const p = ensure();
+export function playBreathCue(phase: BreathPhase = 'inhale') {
+  const p = ensure(phase);
   if (!p) return;
   try {
     p.seekTo(0);
