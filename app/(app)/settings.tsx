@@ -23,7 +23,9 @@ import { WidgetHelpSheet } from '@/components/feedback/WidgetHelpSheet';
 import { FeedbackSheet } from '@/components/feedback/FeedbackSheet';
 import { QuitDateSheet } from '@/components/settings/sheets/QuitDateSheet';
 import { CURRENCY_SYMBOL, FrequencySheet, WeeklyCostSheet } from '@/components/settings/sheets/EditValueSheets';
-import { ReminderTimeSheet, formatTime12 } from '@/components/settings/sheets/ReminderTimeSheet';
+import { ReminderTimeSheet, SessionTimeSheet, formatTime12 } from '@/components/settings/sheets/ReminderTimeSheet';
+import { SLOT_LABEL, SLOT_ORDER } from '@/lib/ritual';
+import type { SessionSlot } from '@/store/useQuitStore';
 import { ConfirmDeleteSheet } from '@/components/settings/sheets/ConfirmDeleteSheet';
 
 type Sheet = 'date' | 'cost' | 'frequency' | 'time' | 'delete' | 'feedback' | null;
@@ -51,6 +53,9 @@ export default function Settings() {
   const setNotifications = useQuitStore((s) => s.setNotifications);
 
   const [sheet, setSheet] = useState<Sheet>(null);
+  const [ritualSlot, setRitualSlot] = useState<SessionSlot | null>(null);
+  const sessions = useQuitStore((s) => s.sessions);
+  const setSessions = useQuitStore((s) => s.setSessions);
   const [toast, setToast] = useState<string | null>(null);
   const { isPremium } = usePremium();
   const {
@@ -101,6 +106,31 @@ export default function Settings() {
             <Row label="Frequency" value={usageFrequency || '—'} onPress={() => setSheet('frequency')} />
             <Row label="My reasons" value={String(reasonsCount)} onPress={() => router.push('/reasons')} />
             <Row label="Reset / start over" danger onPress={() => router.push('/reset')} />
+          </Section>
+
+          <Section label="Ritual">
+            <Row
+              label="Daily sessions"
+              right={
+                <Toggle
+                  value={sessions.enabled}
+                  onChange={(enabled) => {
+                    haptics.tap();
+                    setSessions({ enabled });
+                  }}
+                />
+              }
+            />
+            {sessions.enabled
+              ? SLOT_ORDER.map((slot) => (
+                  <Row
+                    key={slot}
+                    label={`${SLOT_LABEL[slot]} session`}
+                    value={formatTime12(sessions[slot])}
+                    onPress={() => setRitualSlot(slot)}
+                  />
+                ))
+              : null}
           </Section>
 
           <Section label="App">
@@ -163,6 +193,7 @@ export default function Settings() {
       {sheet === 'cost' ? <WeeklyCostSheet onClose={() => setSheet(null)} /> : null}
       {sheet === 'frequency' ? <FrequencySheet onClose={() => setSheet(null)} /> : null}
       {sheet === 'time' ? <ReminderTimeSheet onClose={() => setSheet(null)} /> : null}
+      {ritualSlot ? <SessionTimeSheet slot={ritualSlot} onClose={() => setRitualSlot(null)} /> : null}
       {sheet === 'delete' ? <ConfirmDeleteSheet onClose={() => setSheet(null)} /> : null}
       {sheet === 'feedback' ? <FeedbackSheet onClose={() => setSheet(null)} /> : null}
       {pinStatus === 'help' ? <WidgetHelpSheet onClose={dismissHelp} /> : null}

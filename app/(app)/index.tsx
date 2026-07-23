@@ -25,6 +25,7 @@ import { HomeHeader } from '@/components/home/HomeHeader';
 import { HeroCounter } from '@/components/home/HeroCounter';
 import { StatsRow } from '@/components/home/StatsRow';
 import { AffirmationCard } from '@/components/premium/AffirmationCard';
+import { RitualCard } from '@/components/ritual/RitualCard';
 import { TrialBanner } from '@/components/premium/TrialBanner';
 import { OrbIcon, SlipIcon } from '@/components/home/icons';
 import { DAY_MS } from '@/constants/time';
@@ -120,6 +121,7 @@ export default function Home() {
         <HeroCounter quit={quit} statusCopy={statusFor(ms)} />
 
         <View style={{ gap: 12 }}>
+          <RitualCard onStart={(slot) => go(`/session?slot=${slot}`)} />
           <AffirmationCard ms={ms} />
           <WhyCard reason={reason} onPress={() => go('/reasons')} />
 

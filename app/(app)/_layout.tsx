@@ -60,6 +60,16 @@ export default function AppLayout() {
         }}
       />
       <Stack.Screen
+        name="session"
+        options={{
+          presentation: 'modal',
+          animation: 'slide_from_bottom',
+          animationDuration: 320,
+          gestureEnabled: true,
+          gestureDirection: 'vertical',
+        }}
+      />
+      <Stack.Screen
         name="reset"
         options={{
           presentation: 'transparentModal',

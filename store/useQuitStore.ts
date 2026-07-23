@@ -39,6 +39,13 @@ export type SessionPlan = {
   defaultPattern: string;
 };
 
+export type SessionLog = { date: string; done: SessionSlot[] };
+
+const localDateKey = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+
 export type QuitState = {
   // core
   quitTimestamp: number | null; // UTC ms; null until onboarding done
@@ -57,6 +64,7 @@ export type QuitState = {
   quitFeeling: string; // how quitting feels right now
   reasons: Reason[];
   sessions: SessionPlan;
+  sessionLog: SessionLog;
 
   // app
   onboardingComplete: boolean;
@@ -89,6 +97,7 @@ export type QuitActions = {
   setNotifications: (patch: Partial<NotificationPrefs>) => void;
   setUserName: (name: string | null) => void;
   setSessions: (patch: Partial<SessionPlan>) => void;
+  markSessionDone: (slot: SessionSlot) => void;
   /** Accept the local 3-day trial (paywall dismiss offer). One-shot. */
   startTrial: () => void;
   setTrialEndSeen: (value: boolean) => void;
@@ -122,6 +131,7 @@ const DEFAULT_STATE: QuitState = {
     anchor: 'evening',
     defaultPattern: 'calm478',
   },
+  sessionLog: { date: '', done: [] },
   onboardingComplete: false,
   themePref: 'system',
   breathSound: true,
@@ -179,6 +189,12 @@ export const useQuitStore = create<Store>()(
         set((s) => ({ notifications: { ...s.notifications, ...patch } })),
       setUserName: (userName) => set({ userName }),
       setSessions: (patch) => set((s) => ({ sessions: { ...s.sessions, ...patch } })),
+      markSessionDone: (slot) =>
+        set((s) => {
+          const today = localDateKey();
+          const done = s.sessionLog.date === today ? s.sessionLog.done : [];
+          return { sessionLog: { date: today, done: done.includes(slot) ? done : [...done, slot] } };
+        }),
       startTrial: () => {
         if (get().trialUsed) return;
         set({ trialStartedAt: Date.now(), trialUsed: true, trialEndSeen: false });

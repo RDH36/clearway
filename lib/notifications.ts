@@ -18,7 +18,9 @@ export function initNotifications() {
   });
 }
 
-const CHANNEL_ID = 'support';
+export const NOTIF_CHANNEL_ID = 'support';
+const CHANNEL_ID = NOTIF_CHANNEL_ID;
+const DAILY_NOTIF_ID = 'clearway-daily';
 
 export async function ensureNotificationPermission(): Promise<boolean> {
   if (Platform.OS === 'android') {
@@ -80,7 +82,7 @@ export async function syncEncouragementSchedule(state: EncouragementState, isPre
     if (key === lastSyncKey) return;
     lastSyncKey = key;
 
-    await Notifications.cancelAllScheduledNotificationsAsync();
+    await Notifications.cancelScheduledNotificationAsync(DAILY_NOTIF_ID);
     if (!enabled) return;
     const granted = await ensureNotificationPermission();
     if (!granted) return;
@@ -98,6 +100,7 @@ export async function syncEncouragementSchedule(state: EncouragementState, isPre
     });
 
     await Notifications.scheduleNotificationAsync({
+      identifier: DAILY_NOTIF_ID,
       content: { title: 'Clearway', body: affirmation.text },
       trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: next, channelId: CHANNEL_ID },
     });

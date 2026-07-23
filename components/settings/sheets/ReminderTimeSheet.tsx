@@ -3,7 +3,8 @@ import { Text, View } from 'react-native';
 import { PressableScale } from 'pressto';
 import { fonts } from '@/constants/theme';
 import { useTheme } from '@/theme/ThemeProvider';
-import { useQuitStore } from '@/store/useQuitStore';
+import { useQuitStore, type SessionSlot } from '@/store/useQuitStore';
+import { SLOT_LABEL } from '@/lib/ritual';
 import { withAlpha } from '../SettingsGroup';
 import { SettingsSheet, SheetButton, Stepper } from '../SettingsSheet';
 
@@ -14,29 +15,36 @@ export function formatTime12(dailyTime: string): string {
   return `${hour12}:${String(m).padStart(2, '0')} ${period}`;
 }
 
-export function ReminderTimeSheet({ onClose }: { onClose: () => void }) {
+function TimeSheet({
+  title,
+  blurb,
+  initial,
+  onClose,
+  onSave,
+}: {
+  title: string;
+  blurb: string;
+  initial: string;
+  onClose: () => void;
+  onSave: (hhmm: string) => void;
+}) {
   const { name, colors } = useTheme();
-  const dailyTime = useQuitStore((s) => s.notifications.dailyTime);
-  const setNotifications = useQuitStore((s) => s.setNotifications);
-
-  const [h24, m] = dailyTime.split(':').map(Number);
+  const [h24, m] = initial.split(':').map(Number);
   const [hour, setHour] = useState(h24 % 12 === 0 ? 12 : h24 % 12);
   const [minute, setMinute] = useState(m - (m % 5));
   const [pm, setPm] = useState(h24 >= 12);
 
   const save = (requestClose: (after?: () => void) => void) => {
     const h = (hour % 12) + (pm ? 12 : 0);
-    requestClose(() =>
-      setNotifications({ dailyTime: `${String(h).padStart(2, '0')}:${String(minute).padStart(2, '0')}` })
-    );
+    requestClose(() => onSave(`${String(h).padStart(2, '0')}:${String(minute).padStart(2, '0')}`));
   };
 
   return (
-    <SettingsSheet title="Daily reminder" onClose={onClose}>
+    <SettingsSheet title={title} onClose={onClose}>
       {(requestClose) => (
         <View style={{ gap: 16 }}>
           <Text style={{ fontFamily: fonts.body, fontSize: 14, lineHeight: 20, color: colors.muted }}>
-            A gentle check-in, once a day.
+            {blurb}
           </Text>
           <View style={{ gap: 13 }}>
             <Stepper
@@ -98,5 +106,33 @@ export function ReminderTimeSheet({ onClose }: { onClose: () => void }) {
         </View>
       )}
     </SettingsSheet>
+  );
+}
+
+export function ReminderTimeSheet({ onClose }: { onClose: () => void }) {
+  const dailyTime = useQuitStore((s) => s.notifications.dailyTime);
+  const setNotifications = useQuitStore((s) => s.setNotifications);
+  return (
+    <TimeSheet
+      title="Daily reminder"
+      blurb="A gentle check-in, once a day."
+      initial={dailyTime}
+      onClose={onClose}
+      onSave={(dailyTime12) => setNotifications({ dailyTime: dailyTime12 })}
+    />
+  );
+}
+
+export function SessionTimeSheet({ slot, onClose }: { slot: SessionSlot; onClose: () => void }) {
+  const time = useQuitStore((s) => s.sessions[slot]);
+  const setSessions = useQuitStore((s) => s.setSessions);
+  return (
+    <TimeSheet
+      title={`${SLOT_LABEL[slot]} session`}
+      blurb="We nudge you at this time — a session before the pull starts."
+      initial={time}
+      onClose={onClose}
+      onSave={(hhmm) => setSessions({ [slot]: hhmm })}
+    />
   );
 }
