@@ -8,19 +8,15 @@ import { fonts } from '@/constants/theme';
 import { TimelineRow } from './TimelineRow';
 import { PremiumPill } from './PremiumPill';
 
-const BLUR_TITLE = {
-  color: 'transparent',
-  textShadowColor: 'rgba(234,244,242,0.55)',
-  textShadowOffset: { width: 0, height: 0 },
-  textShadowRadius: 12,
-} as const;
-
-const BLUR_BODY = {
-  color: 'transparent',
-  textShadowColor: 'rgba(159,180,179,0.45)',
-  textShadowOffset: { width: 0, height: 0 },
-  textShadowRadius: 9,
-} as const;
+function FrostedLines() {
+  return (
+    <View style={{ gap: 7, paddingVertical: 3 }}>
+      <View style={{ height: 13, width: '52%', borderRadius: 7, backgroundColor: 'rgba(234,244,242,0.18)' }} />
+      <View style={{ height: 9, width: '92%', borderRadius: 5, backgroundColor: 'rgba(159,180,179,0.14)' }} />
+      <View style={{ height: 9, width: '68%', borderRadius: 5, backgroundColor: 'rgba(159,180,179,0.14)' }} />
+    </View>
+  );
+}
 
 export function RecoveryTab({
   ms,
@@ -89,14 +85,18 @@ export function RecoveryTab({
                   </Text>
                 ) : null}
               </View>
-              <Text
-                style={[{ fontFamily: fonts.bodySemibold, fontSize: 16, color: past ? '#EAF4F2' : '#AFC4C2' }, locked ? BLUR_TITLE : null]}
-              >
-                {m.title}
-              </Text>
-              <Text style={[{ fontFamily: fonts.body, fontSize: 12.5, lineHeight: 18, color: '#9FB4B3' }, locked ? BLUR_BODY : null]}>
-                {m.body}
-              </Text>
+              {locked ? (
+                <FrostedLines />
+              ) : (
+                <>
+                  <Text style={{ fontFamily: fonts.bodySemibold, fontSize: 16, color: past ? '#EAF4F2' : '#AFC4C2' }}>
+                    {m.title}
+                  </Text>
+                  <Text style={{ fontFamily: fonts.body, fontSize: 12.5, lineHeight: 18, color: '#9FB4B3' }}>
+                    {m.body}
+                  </Text>
+                </>
+              )}
             </View>
           );
           return (

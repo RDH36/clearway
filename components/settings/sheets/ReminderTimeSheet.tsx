@@ -21,22 +21,42 @@ function TimeSheet({
   initial,
   onClose,
   onSave,
+  lockPeriod,
+  hourOptions,
+  maxMinutes,
 }: {
   title: string;
   blurb: string;
   initial: string;
   onClose: () => void;
   onSave: (hhmm: string) => void;
+  lockPeriod?: 'AM' | 'PM';
+  hourOptions?: number[];
+  maxMinutes?: number;
 }) {
   const { name, colors } = useTheme();
   const [h24, m] = initial.split(':').map(Number);
-  const [hour, setHour] = useState(h24 % 12 === 0 ? 12 : h24 % 12);
+  const initialHour12 = h24 % 12 === 0 ? 12 : h24 % 12;
+  const hours = hourOptions ?? [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+  const [hour, setHour] = useState(hours.includes(initialHour12) ? initialHour12 : hours[0]);
   const [minute, setMinute] = useState(m - (m % 5));
-  const [pm, setPm] = useState(h24 >= 12);
+  const [pm, setPm] = useState(lockPeriod ? lockPeriod === 'PM' : h24 >= 12);
+
+  const stepHour = (dir: -1 | 1) => {
+    setHour((v) => {
+      const idx = hours.indexOf(v);
+      return hours[(idx + dir + hours.length) % hours.length];
+    });
+  };
 
   const save = (requestClose: (after?: () => void) => void) => {
-    const h = (hour % 12) + (pm ? 12 : 0);
-    requestClose(() => onSave(`${String(h).padStart(2, '0')}:${String(minute).padStart(2, '0')}`));
+    let h = (hour % 12) + (pm ? 12 : 0);
+    let min = minute;
+    if (maxMinutes != null && h * 60 + min > maxMinutes) {
+      h = Math.floor(maxMinutes / 60);
+      min = maxMinutes % 60;
+    }
+    requestClose(() => onSave(`${String(h).padStart(2, '0')}:${String(min).padStart(2, '0')}`));
   };
 
   return (
@@ -50,8 +70,8 @@ function TimeSheet({
             <Stepper
               label="Hour"
               value={String(hour)}
-              onPrev={() => setHour((v) => (v === 1 ? 12 : v - 1))}
-              onNext={() => setHour((v) => (v === 12 ? 1 : v + 1))}
+              onPrev={() => stepHour(-1)}
+              onNext={() => stepHour(1)}
             />
             <Stepper
               label="Minutes"
@@ -72,10 +92,14 @@ function TimeSheet({
             >
               {(['AM', 'PM'] as const).map((period) => {
                 const on = pm === (period === 'PM');
+                const disabled = lockPeriod != null && lockPeriod !== period;
                 return (
                   <PressableScale
                     key={period}
-                    onPress={() => setPm(period === 'PM')}
+                    onPress={() => {
+                      if (disabled) return;
+                      setPm(period === 'PM');
+                    }}
                     style={{
                       flex: 1,
                       height: 36,
@@ -123,9 +147,16 @@ export function ReminderTimeSheet({ onClose }: { onClose: () => void }) {
   );
 }
 
+const SLOT_RULES: Record<SessionSlot, { lockPeriod: 'AM' | 'PM'; hourOptions?: number[]; maxMinutes?: number }> = {
+  morning: { lockPeriod: 'AM' },
+  midday: { lockPeriod: 'PM', hourOptions: [12, 1, 2, 3], maxMinutes: 15 * 60 },
+  evening: { lockPeriod: 'PM' },
+};
+
 export function SessionTimeSheet({ slot, onClose }: { slot: SessionSlot; onClose: () => void }) {
   const time = useQuitStore((s) => s.sessions[slot]);
   const setSessions = useQuitStore((s) => s.setSessions);
+  const rules = SLOT_RULES[slot];
   return (
     <TimeSheet
       title={`${SLOT_LABEL[slot]} session`}
@@ -133,6 +164,9 @@ export function SessionTimeSheet({ slot, onClose }: { slot: SessionSlot; onClose
       initial={time}
       onClose={onClose}
       onSave={(hhmm) => setSessions({ [slot]: hhmm })}
+      lockPeriod={rules.lockPeriod}
+      hourOptions={rules.hourOptions}
+      maxMinutes={rules.maxMinutes}
     />
   );
 }
