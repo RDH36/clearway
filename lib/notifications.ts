@@ -80,7 +80,6 @@ export async function syncEncouragementSchedule(state: EncouragementState, isPre
       ? `${hour}:${minute}|${state.quitTimestamp}|${next.toDateString()}|${state.reasons[0]?.title ?? ''}`
       : 'off';
     if (key === lastSyncKey) return;
-    lastSyncKey = key;
 
     await Notifications.cancelScheduledNotificationAsync(DAILY_NOTIF_ID);
     if (!enabled) return;
@@ -104,6 +103,9 @@ export async function syncEncouragementSchedule(state: EncouragementState, isPre
       content: { title: 'Clearway', body: affirmation.text },
       trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: next, channelId: CHANNEL_ID },
     });
+    // Only mark synced once the schedule call actually completed — a MIUI
+    // freeze mid-flight would otherwise poison the guard and skip retries.
+    lastSyncKey = key;
   } catch {
     return;
   }

@@ -13,6 +13,7 @@
     },
     "android": {
       "package": "com.rdh36.clearway",
+      "permissions": ["android.permission.SCHEDULE_EXACT_ALARM"],
       "blockedPermissions": ["android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"],
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",

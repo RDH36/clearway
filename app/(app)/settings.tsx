@@ -13,7 +13,14 @@ import { BackIcon } from '@/components/progress/icons';
 import { Group, Row, SectionLabel, withAlpha } from '@/components/settings/SettingsGroup';
 import { Toggle } from '@/components/settings/Toggle';
 import { AppearanceRow } from '@/components/settings/AppearanceRow';
-import { PRIVACY_URL, TERMS_URL, rateApp, shareApp } from '@/components/settings/actions';
+import {
+  PRIVACY_URL,
+  TERMS_URL,
+  needsExactAlarmOptIn,
+  openExactAlarmSettings,
+  rateApp,
+  shareApp,
+} from '@/components/settings/actions';
 import { useWidgetPin } from '@/hooks/useWidgetPin';
 import { ensureNotificationPermission } from '@/lib/notifications';
 import { haptics } from '@/lib/haptics';
@@ -135,6 +142,9 @@ export default function Settings() {
                   );
                 })
               : null}
+            {needsExactAlarmOptIn ? (
+              <Row label="Reminders arriving late?" onPress={openExactAlarmSettings} />
+            ) : null}
           </Section>
 
           <Section label="App">

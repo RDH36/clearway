@@ -1,4 +1,5 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
+import { AppState } from 'react-native';
 import { usePremium } from '@/hooks/usePremium';
 import { useQuitStore } from '@/store/useQuitStore';
 import { initNotifications, syncEncouragementSchedule } from '@/lib/notifications';
@@ -17,9 +18,34 @@ export function PremiumSync() {
   const userName = useQuitStore((s) => s.userName);
   const sessions = useQuitStore((s) => s.sessions);
 
+  const premiumRef = useRef(isPremium);
+  useEffect(() => {
+    premiumRef.current = isPremium;
+  }, [isPremium]);
+
   useEffect(() => {
     initNotifications();
     cleanupSupportBar();
+  }, []);
+
+  // MIUI freezes the process right after backgrounding, which can strand an
+  // in-flight notification reschedule — reconcile every time we come back.
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (status) => {
+      if (status !== 'active') return;
+      const s = useQuitStore.getState();
+      const shared = {
+        quitTimestamp: s.quitTimestamp,
+        weeklySpend: s.weeklySpend,
+        primaryMotivation: s.primaryMotivation,
+        reasons: s.reasons,
+        notifications: s.notifications,
+        userName: s.userName,
+      };
+      syncEncouragementSchedule(shared, premiumRef.current);
+      syncRitualSchedule({ ...shared, sessions: s.sessions }, premiumRef.current);
+    });
+    return () => sub.remove();
   }, []);
 
   useEffect(() => {

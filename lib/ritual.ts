@@ -18,22 +18,18 @@ export const SLOT_LABEL: Record<SessionSlot, string> = {
 const sessionNotifId = (slot: SessionSlot) => `clearway-session-${slot}`;
 const RITUAL_DATA_TYPE = 'ritual_session';
 
+type RitualNotifData = { type?: string; slot?: string; time?: string };
+
 // On Android, expo-notifications does not always honor a custom `identifier`
 // for repeating triggers (stored under an auto-generated UUID instead), so an
 // identifier-based cancel can match nothing and leave duplicates behind on
 // every reschedule. Enumerate and match on data.type + identifier prefix.
-async function cancelRitualNotifications() {
+async function getRitualNotifications() {
   const scheduled = await Notifications.getAllScheduledNotificationsAsync();
-  for (const req of scheduled) {
-    const data = req.content?.data as { type?: string } | null | undefined;
-    if (data?.type === RITUAL_DATA_TYPE || req.identifier.startsWith('clearway-session-')) {
-      try {
-        await Notifications.cancelScheduledNotificationAsync(req.identifier);
-      } catch {
-        continue;
-      }
-    }
-  }
+  return scheduled.filter((req) => {
+    const data = req.content?.data as RitualNotifData | null | undefined;
+    return data?.type === RITUAL_DATA_TYPE || req.identifier.startsWith('clearway-session-');
+  });
 }
 
 export const todayKey = () => {
@@ -81,20 +77,35 @@ export type RitualState = {
   quitTimestamp: number | null;
 };
 
-let lastSyncKey = '';
-
+// MIUI/SmartPower can freeze the app seconds after it goes to background,
+// stranding an in-flight cancel+reschedule for hours. Never trust an
+// in-memory "already synced" flag: reconcile against what the OS actually
+// has scheduled, on every call — the caller re-runs this on app foreground.
 export async function syncRitualSchedule(state: RitualState, isPremium: boolean) {
   try {
     const enabled = state.sessions.enabled && state.notifications.enabled;
     const slots = isPremium ? SLOT_ORDER : [state.sessions.anchor];
-    const key = enabled
-      ? `${slots.map((s) => state.sessions[s]).join('|')}|${slots.length}|${state.userName ?? ''}|${state.primaryMotivation}|${state.reasons[0]?.title ?? ''}`
-      : 'off';
-    if (key === lastSyncKey) return;
-    lastSyncKey = key;
+    const desired = enabled ? slots.map((slot) => ({ slot, time: state.sessions[slot] })) : [];
 
-    await cancelRitualNotifications();
-    if (!enabled) return;
+    const scheduled = await getRitualNotifications();
+    const inSync =
+      scheduled.length === desired.length &&
+      desired.every((d) =>
+        scheduled.some((req) => {
+          const data = req.content?.data as RitualNotifData | null | undefined;
+          return data?.slot === d.slot && data?.time === d.time;
+        })
+      );
+    if (inSync) return;
+
+    for (const req of scheduled) {
+      try {
+        await Notifications.cancelScheduledNotificationAsync(req.identifier);
+      } catch {
+        continue;
+      }
+    }
+    if (!desired.length) return;
     const { granted } = await Notifications.getPermissionsAsync();
     if (!granted) return;
 
@@ -120,7 +131,7 @@ export async function syncRitualSchedule(state: RitualState, isPremium: boolean)
         content: {
           title: state.userName ? `${state.userName} — ${SLOT_LABEL[slot].toLowerCase()} session ✦` : `${SLOT_LABEL[slot]} session ✦`,
           body: affirmation.text,
-          data: { type: RITUAL_DATA_TYPE, slot },
+          data: { type: RITUAL_DATA_TYPE, slot, time: state.sessions[slot] },
         },
         trigger: {
           type: Notifications.SchedulableTriggerInputTypes.DAILY,
