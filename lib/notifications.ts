@@ -1,10 +1,6 @@
 import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
-import { pickAffirmation, reasonLabel } from '@/lib/affirmations';
-import { msClean } from '@/lib/time';
-import { moneySaved } from '@/lib/money';
-import { formatMoney } from '@/lib/format';
-import { DAY_MS } from '@/constants/time';
+import { affirmationAt, nextOccurrences, occurrenceKey } from '@/lib/scheduleWindow';
 import type { Motivation, NotificationPrefs, Reason } from '@/store/useQuitStore';
 
 export function initNotifications() {
@@ -20,7 +16,11 @@ export function initNotifications() {
 
 export const NOTIF_CHANNEL_ID = 'support';
 const CHANNEL_ID = NOTIF_CHANNEL_ID;
-const DAILY_NOTIF_ID = 'clearway-daily';
+const DAILY_DATA_TYPE = 'daily_support';
+const dailyNotifId = (at: Date) => `clearway-daily-${occurrenceKey(at)}`;
+// Ritual slots take shifts 0/7/14, so the daily nudge sits at 21 — otherwise it
+// would land on the same affirmation as the morning session on the same day.
+const DAILY_SEED_SHIFT = 21;
 
 export async function ensureNotificationPermission(): Promise<boolean> {
   if (Platform.OS === 'android') {
@@ -63,49 +63,47 @@ export type EncouragementState = {
   userName: string | null;
 };
 
-let lastSyncKey = '';
+async function getDailyNotifications() {
+  const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+  return scheduled.filter((req) => {
+    const data = req.content?.data as { type?: string } | null | undefined;
+    return data?.type === DAILY_DATA_TYPE || req.identifier.startsWith('clearway-daily');
+  });
+}
 
 export async function syncEncouragementSchedule(state: EncouragementState, isPremium: boolean) {
   try {
-    const [rawHour, rawMinute] = state.notifications.dailyTime.split(':').map(Number);
-    const hour = Number.isFinite(rawHour) ? rawHour : 9;
-    const minute = Number.isFinite(rawMinute) ? rawMinute : 0;
-
-    const next = new Date();
-    next.setHours(hour, minute, 0, 0);
-    if (next.getTime() <= Date.now()) next.setDate(next.getDate() + 1);
-
     const enabled = isPremium && state.notifications.enabled;
-    const key = enabled
-      ? `${hour}:${minute}|${state.quitTimestamp}|${next.toDateString()}|${state.reasons[0]?.title ?? ''}`
-      : 'off';
-    if (key === lastSyncKey) return;
+    const desired = enabled ? nextOccurrences(state.notifications.dailyTime) : [];
 
-    await Notifications.cancelScheduledNotificationAsync(DAILY_NOTIF_ID);
-    if (!enabled) return;
+    const scheduled = await getDailyNotifications();
+    const live = new Set(scheduled.map((req) => req.identifier));
+    const inSync =
+      scheduled.length === desired.length && desired.every((at) => live.has(dailyNotifId(at)));
+    if (inSync) return;
+
+    for (const req of scheduled) {
+      try {
+        await Notifications.cancelScheduledNotificationAsync(req.identifier);
+      } catch {
+        continue;
+      }
+    }
+    if (!desired.length) return;
     const granted = await ensureNotificationPermission();
     if (!granted) return;
 
-    const msAtDelivery = msClean(state.quitTimestamp, next.getTime());
-    const days = Math.max(1, Math.floor(msAtDelivery / DAY_MS));
-    const affirmation = pickAffirmation({
-      motivation: state.primaryMotivation,
-      moment: 'general',
-      seed: days,
-      reason: reasonLabel(state.reasons[0]?.title, state.primaryMotivation),
-      name: state.userName,
-      days,
-      money: formatMoney(moneySaved(state.weeklySpend, msAtDelivery)),
-    });
-
-    await Notifications.scheduleNotificationAsync({
-      identifier: DAILY_NOTIF_ID,
-      content: { title: 'Clearway', body: affirmation.text },
-      trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: next, channelId: CHANNEL_ID },
-    });
-    // Only mark synced once the schedule call actually completed — a MIUI
-    // freeze mid-flight would otherwise poison the guard and skip retries.
-    lastSyncKey = key;
+    for (const at of desired) {
+      await Notifications.scheduleNotificationAsync({
+        identifier: dailyNotifId(at),
+        content: {
+          title: 'Clearway',
+          body: affirmationAt(state, at, DAILY_SEED_SHIFT),
+          data: { type: DAILY_DATA_TYPE },
+        },
+        trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: at, channelId: CHANNEL_ID },
+      });
+    }
   } catch {
     return;
   }

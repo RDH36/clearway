@@ -1,10 +1,6 @@
 import * as Notifications from 'expo-notifications';
-import { pickAffirmation, reasonLabel } from '@/lib/affirmations';
 import { NOTIF_CHANNEL_ID } from '@/lib/notifications';
-import { msClean } from '@/lib/time';
-import { moneySaved } from '@/lib/money';
-import { formatMoney } from '@/lib/format';
-import { DAY_MS } from '@/constants/time';
+import { affirmationAt, nextOccurrences, occurrenceKey } from '@/lib/scheduleWindow';
 import type { Motivation, NotificationPrefs, Reason, SessionLog, SessionPlan, SessionSlot } from '@/store/useQuitStore';
 
 export const SLOT_ORDER: SessionSlot[] = ['morning', 'midday', 'evening'];
@@ -15,10 +11,11 @@ export const SLOT_LABEL: Record<SessionSlot, string> = {
   evening: 'Evening',
 };
 
-const sessionNotifId = (slot: SessionSlot) => `clearway-session-${slot}`;
 const RITUAL_DATA_TYPE = 'ritual_session';
+const sessionNotifId = (slot: SessionSlot, at: Date) => `clearway-session-${slot}-${occurrenceKey(at)}`;
+const slotDateKey = (slot: SessionSlot, at: Date) => `${slot}@${occurrenceKey(at)}T${at.getHours()}:${at.getMinutes()}`;
 
-type RitualNotifData = { type?: string; slot?: string; time?: string };
+type RitualNotifData = { type?: string; slot?: string; key?: string };
 
 // On Android, expo-notifications does not always honor a custom `identifier`
 // for repeating triggers (stored under an auto-generated UUID instead), so an
@@ -85,17 +82,18 @@ export async function syncRitualSchedule(state: RitualState, isPremium: boolean)
   try {
     const enabled = state.sessions.enabled && state.notifications.enabled;
     const slots = isPremium ? SLOT_ORDER : [state.sessions.anchor];
-    const desired = enabled ? slots.map((slot) => ({ slot, time: state.sessions[slot] })) : [];
+    const desired = enabled
+      ? slots.flatMap((slot, i) =>
+          nextOccurrences(state.sessions[slot]).map((at) => ({ slot, at, seedShift: i * 7 }))
+        )
+      : [];
 
     const scheduled = await getRitualNotifications();
+    const live = new Set(
+      scheduled.map((req) => (req.content?.data as RitualNotifData | null | undefined)?.key ?? req.identifier)
+    );
     const inSync =
-      scheduled.length === desired.length &&
-      desired.every((d) =>
-        scheduled.some((req) => {
-          const data = req.content?.data as RitualNotifData | null | undefined;
-          return data?.slot === d.slot && data?.time === d.time;
-        })
-      );
+      scheduled.length === desired.length && desired.every((d) => live.has(slotDateKey(d.slot, d.at)));
     if (inSync) return;
 
     for (const req of scheduled) {
@@ -109,34 +107,17 @@ export async function syncRitualSchedule(state: RitualState, isPremium: boolean)
     const { granted } = await Notifications.getPermissionsAsync();
     if (!granted) return;
 
-    const ms = msClean(state.quitTimestamp);
-    const days = Math.max(1, Math.floor(ms / DAY_MS));
-    const reason = reasonLabel(state.reasons[0]?.title, state.primaryMotivation);
-    const money = formatMoney(moneySaved(state.weeklySpend, Math.max(ms, DAY_MS)));
-
-    for (let i = 0; i < slots.length; i++) {
-      const slot = slots[i];
-      const [hour, minute] = state.sessions[slot].split(':').map(Number);
-      const affirmation = pickAffirmation({
-        motivation: state.primaryMotivation,
-        moment: 'general',
-        seed: days + i * 7,
-        reason,
-        days,
-        money,
-        name: state.userName,
-      });
+    for (const { slot, at, seedShift } of desired) {
       await Notifications.scheduleNotificationAsync({
-        identifier: sessionNotifId(slot),
+        identifier: sessionNotifId(slot, at),
         content: {
           title: state.userName ? `${state.userName} — ${SLOT_LABEL[slot].toLowerCase()} session ✦` : `${SLOT_LABEL[slot]} session ✦`,
-          body: affirmation.text,
-          data: { type: RITUAL_DATA_TYPE, slot, time: state.sessions[slot] },
+          body: affirmationAt(state, at, seedShift),
+          data: { type: RITUAL_DATA_TYPE, slot, key: slotDateKey(slot, at) },
         },
         trigger: {
-          type: Notifications.SchedulableTriggerInputTypes.DAILY,
-          hour: Number.isFinite(hour) ? hour : 9,
-          minute: Number.isFinite(minute) ? minute : 0,
+          type: Notifications.SchedulableTriggerInputTypes.DATE,
+          date: at,
           channelId: NOTIF_CHANNEL_ID,
         },
       });
